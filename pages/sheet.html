@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sheet Inventory | LNI</title>
+    <title>Sheet Inventory | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
-    <link rel="stylesheet" href="../styles/sheet.css"> 
+    <link rel="stylesheet" href="../styles/sheet.css">
 </head>
 <body>
     <nav class="app-nav">
-        <div class="nav-brand">LNI CONSOLE</div>
+        <div class="nav-brand">LNI</div>
         <div class="nav-tabs">
             <a href="dashboard.html" class="tab">Dashboard</a>
             <a href="structural.html" class="tab">Structural</a>
@@ -19,26 +19,32 @@
     </nav>
 
     <main class="content-container">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div id="admin-tools" style="display:none; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h1>Sheet Inventory</h1>
-            <button id="admin-add-btn" class="btn-update" style="display:none;" onclick="toggleAddForm()">+ Add New Stock</button>
+            <button class="btn-submit" onclick="toggleForm()">+ Add / Reserve Item</button>
         </div>
 
-        <section id="add-item-form" class="inventory-card" style="display:none; padding:20px; margin-bottom:20px; border-left:4px solid var(--accent);">
-            <h3>Add New Sheet Stock</h3>
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px;">
-                <input type="text" id="new-material" placeholder="Material (e.g. MS)">
-                <input type="text" id="new-gauge" placeholder="Gauge (e.g. 10ga)">
-                <input type="text" id="new-size" placeholder="Size (e.g. 48x96)">
-                <input type="number" id="new-qty" placeholder="Quantity">
-                <button class="btn-update" onclick="submitNewItem()">Submit to Sheet</button>
+        <section id="add-item-form" style="display:none;">
+            <h3>New Stock Entry</h3>
+            <div class="form-grid">
+                <input type="text" id="new-type" placeholder="Type (A1011...)">
+                <input type="text" id="new-thickness" placeholder="Thickness (10ga...)">
+                <input type="text" id="new-size" placeholder="Size (LxW)">
+                <input type="text" id="new-location" placeholder="Location">
+                <input type="text" id="new-cert" placeholder="Cert #">
+                <input type="text" id="new-job" placeholder="Reserve for Job #">
+                <input type="text" id="new-notes" placeholder="Notes">
+                <button class="btn-submit" onclick="submitNewItem()">Upload to Sheet</button>
             </div>
         </section>
 
         <div class="inventory-card">
             <table>
                 <thead>
-                    <tr><th>Material</th><th>Gauge</th><th>Size</th><th>Qty</th><th>Status</th></tr>
+                    <tr>
+                        <th>ID</th><th>Type</th><th>Thickness</th><th>Size</th>
+                        <th>Location</th><th>Cert</th><th>Added</th><th>Reserved</th><th>User</th><th>Notes</th>
+                    </tr>
                 </thead>
                 <tbody id="sheet-list"></tbody>
             </table>

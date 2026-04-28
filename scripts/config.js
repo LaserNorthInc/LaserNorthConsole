@@ -1,4 +1,3 @@
-// CONFIGURATION & INITIALIZATION
 const firebaseConfig = {
   apiKey: "AIzaSyBhwDfRQLphl_0Lk8pQDZQ3jO8pr795aqU",
   authDomain: "lasernorthconsole-32295.firebaseapp.com",
@@ -10,26 +9,19 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db = firebase.firestore(); // Just in case you use it for user profiles
 
-// scripts/config.js (Updated)
 const SHEET_CONFIG = {
     IDS: {
-        FULL_SHEET: 'ID_1',
-        FULL_STRUCTURAL: 'ID_2',
-        CROPPER_SHEET: 'ID_3',
-        CROPPER_STRUCTURAL: 'ID_4'
+        FULL_SHEET: '1kG_fjYX4Vc0D8qId4yaHEgJZl5xJ-9Y1MaIo549a_l8',
+        FULL_STRUCTURAL: 'YOUR_SHEET_ID_HERE',
+        CROPPER_SHEET: 'YOUR_SHEET_ID_HERE',
+        CROPPER_STRUCTURAL: 'YOUR_SHEET_ID_HERE'
     },
-    // Map your tabs here
-    TABS: {
-        STEEL: '0',        // The 'gid' for the Steel tab
-        ALUMINUM: '12345', // The 'gid' for the Aluminum tab
-        BEAMS: '0',
-        TUBING: '98765'
-    },
-    // Helper for reading specific tabs
-    getTabUrl: (sheetId, gid) => `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`,
-    
-    // Deployment URL for your Google Apps Script
-    SCRIPT_URL: 'https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec'
+    SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxsEIqi6_gjzCMTJCvb56uqebBoWF1DgLBmUZi_qvLVm4CUfarR_xybWM_voLANgsWupw/exec',
+    getReadUrl: (id, gid=0) => `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`
 };
+
+async function logoutUser() {
+    await auth.signOut();
+    window.location.href = "../index.html";
+}

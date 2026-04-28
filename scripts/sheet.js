@@ -1,65 +1,86 @@
 document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(user => {
         if (user) {
-            // Check if user email is an admin (Modify with your email)
-            if (user.email === 'admin@lasernorthinc.com') {
-                document.getElementById('admin-add-btn').style.display = 'block';
+            // Display Admin tools if authorized
+            const adminArea = document.getElementById('admin-tools');
+            if (user.email.includes('admin') || user.email.includes('lasernorth')) {
+                adminArea.style.display = 'flex';
             }
             loadSheetData();
         }
     });
 });
 
-async function loadSheetData() {
-    const list = document.getElementById('sheet-list');
-    // Fetch from 'Full Sheet' and 'Cropper Sheet'
-    const sources = [
-        {id: SHEET_CONFIG.IDS.FULL_SHEET, gid: SHEET_CONFIG.TABS.STEEL},
-        {id: SHEET_CONFIG.IDS.CROPPER_SHEET, gid: SHEET_CONFIG.TABS.STEEL}
-    ];
-    
-    let html = '';
-    for (const source of sources) {
-        const res = await fetch(SHEET_CONFIG.getTabUrl(source.id, source.gid));
-        const data = await res.text();
-        const rows = data.split('\n').slice(1);
-        
-        rows.forEach(r => {
-            const [mat, gauge, size, qty] = r.split(',').map(c => c.replace(/"/g, ''));
-            if(mat) html += `
-                <tr>
-                    <td data-label="Material" class="col-highlight">${mat}</td>
-                    <td data-label="Gauge">${gauge}</td>
-                    <td data-label="Size">${size}</td>
-                    <td data-label="Qty">${qty}</td>
-                    <td data-label="Status"><span class="stock-badge ${qty < 5 ? 'stock-low' : 'stock-ok'}">${qty < 5 ? 'Low' : 'OK'}</span></td>
-                </tr>`;
-        });
-    }
-    list.innerHTML = html;
+function generateID() {
+    return 'LN-' + Math.random().toString(36).substr(2, 4).toUpperCase();
 }
 
-function toggleAddForm() {
-    const form = document.getElementById('add-item-form');
-    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+async function loadSheetData() {
+    const list = document.getElementById('sheet-list');
+    list.innerHTML = '<tr><td colspan="10">Loading inventory...</td></tr>';
+    
+    try {
+        const res = await fetch(SHEET_CONFIG.getReadUrl(SHEET_CONFIG.IDS.FULL_SHEET));
+        const data = await res.text();
+        const rows = data.split('\n').slice(1);
+        let html = '';
+
+        rows.forEach(r => {
+            const cols = r.split(',').map(c => c.replace(/"/g, ''));
+            if(cols[0]) {
+                const [id, type, thick, size, loc, cert, date, reserve, user, notes] = cols;
+                const reserveClass = reserve === 'AVAILABLE' ? 'status-available' : 'status-reserved';
+                html += `
+                    <tr>
+                        <td data-label="ID" class="col-highlight">${id}</td>
+                        <td data-label="Type">${type}</td>
+                        <td data-label="Thickness">${thick}</td>
+                        <td data-label="Size">${size}</td>
+                        <td data-label="Location">${loc}</td>
+                        <td data-label="Cert">${cert}</td>
+                        <td data-label="Date Added">${date}</td>
+                        <td data-label="Reserve" class="${reserveClass}">${reserve}</td>
+                        <td data-label="User">${user}</td>
+                        <td data-label="Notes">${notes}</td>
+                    </tr>`;
+            }
+        });
+        list.innerHTML = html;
+    } catch(e) { list.innerHTML = '<tr><td colspan="10">Error loading sheet data.</td></tr>'; }
+}
+
+function toggleForm() {
+    const f = document.getElementById('add-item-form');
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
 }
 
 async function submitNewItem() {
+    const user = auth.currentUser;
+    const jobNum = document.getElementById('new-job').value;
+    const today = new Date();
+    const dateStr = (today.getMonth()+1) + '/' + today.getDate() + '/' + today.getFullYear();
+
     const payload = {
-        sheetId: SHEET_CONFIG.IDS.FULL_SHEET, // Target sheet
-        material: document.getElementById('new-material').value,
-        gauge: document.getElementById('new-gauge').value,
+        sheetId: SHEET_CONFIG.IDS.FULL_SHEET,
+        id: generateID(),
+        type: document.getElementById('new-type').value,
+        thickness: document.getElementById('new-thickness').value,
         size: document.getElementById('new-size').value,
-        qty: document.getElementById('new-qty').value
+        cert: document.getElementById('new-cert').value,
+        location: document.getElementById('new-location').value,
+        notes: document.getElementById('new-notes').value,
+        user: user.displayName || user.email,
+        dateAdded: dateStr,
+        reservedFor: jobNum || "AVAILABLE"
     };
 
-    const response = await fetch(SHEET_CONFIG.SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-    });
-
-    if (response.ok) {
-        alert("Item Added!");
+    try {
+        await fetch(SHEET_CONFIG.SCRIPT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify(payload) 
+        });
+        alert("Upload Success: " + payload.id);
         location.reload();
-    }
+    } catch(e) { alert("Failed to connect to Google Sheets."); }
 }
