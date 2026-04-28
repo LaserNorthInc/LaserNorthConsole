@@ -1,28 +1,53 @@
-<main class="content-container">
-    <h1>Sheet Stock Inventory</h1>
-    
-    <div class="inventory-table-container">
-        <table class="inventory-table">
-            <thead>
-                <tr>
-                    <th>Material</th>
-                    <th>Gauge</th>
-                    <th>Dimensions</th>
-                    <th>Qty</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="sheet-table-body">
-                <tr>
-                    <td class="col-highlight">Mild Steel</td>
-                    <td>10ga</td>
-                    <td>48" x 96"</td>
-                    <td>24</td>
-                    <td><span class="stock-badge stock-ok">In Stock</span></td>
-                    <td><button class="btn-icon">Edit</button></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</main>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sheet Inventory | LNI</title>
+    <link rel="stylesheet" href="../styles/dashboard.css">
+    <link rel="stylesheet" href="../styles/sheet.css"> 
+</head>
+<body>
+    <nav class="app-nav">
+        <div class="nav-brand">LNI CONSOLE</div>
+        <div class="nav-tabs">
+            <a href="dashboard.html" class="tab">Dashboard</a>
+            <a href="structural.html" class="tab">Structural</a>
+            <a href="sheet.html" class="tab active">Sheet</a>
+        </div>
+        <button class="logout-btn" onclick="logoutUser()">Logout</button>
+    </nav>
+
+    <main class="content-container">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Sheet Inventory</h1>
+            <button id="admin-add-btn" class="btn-update" style="display:none;" onclick="toggleAddForm()">+ Add New Stock</button>
+        </div>
+
+        <section id="add-item-form" class="inventory-card" style="display:none; padding:20px; margin-bottom:20px; border-left:4px solid var(--accent);">
+            <h3>Add New Sheet Stock</h3>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px;">
+                <input type="text" id="new-material" placeholder="Material (e.g. MS)">
+                <input type="text" id="new-gauge" placeholder="Gauge (e.g. 10ga)">
+                <input type="text" id="new-size" placeholder="Size (e.g. 48x96)">
+                <input type="number" id="new-qty" placeholder="Quantity">
+                <button class="btn-update" onclick="submitNewItem()">Submit to Sheet</button>
+            </div>
+        </section>
+
+        <div class="inventory-card">
+            <table>
+                <thead>
+                    <tr><th>Material</th><th>Gauge</th><th>Size</th><th>Qty</th><th>Status</th></tr>
+                </thead>
+                <tbody id="sheet-list"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+    <script src="../scripts/config.js"></script>
+    <script src="../scripts/sheet.js"></script>
+</body>
+</html>

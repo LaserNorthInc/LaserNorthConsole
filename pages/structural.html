@@ -2,30 +2,67 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Structural Inventory | LNI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structural | LNI</title>
+    <link rel="stylesheet" href="../styles/dashboard.css">
     <link rel="stylesheet" href="../styles/structural.css">
 </head>
 <body>
     <nav class="app-nav">
-        <div class="nav-brand">LNI Console</div>
+        <div class="nav-brand">LNI CONSOLE</div>
         <div class="nav-tabs">
             <a href="dashboard.html" class="tab">Dashboard</a>
             <a href="structural.html" class="tab active">Structural</a>
-            <a href="sheet.html" class="tab">Sheet Stock</a>
+            <a href="sheet.html" class="tab">Sheet</a>
         </div>
         <button class="logout-btn" onclick="logoutUser()">Logout</button>
     </nav>
 
     <main class="content-container">
-        <h1>Structural Inventory (Beams/Tubes)</h1>
-        <div id="structural-list" class="inventory-grid">
-            </div>
+        <h1>Structural (Beams/Tubes)</h1>
+        <div class="inventory-card">
+            <table>
+                <thead>
+                    <tr><th>Type</th><th>Size</th><th>Length</th><th>Stock</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="inventory-list">
+                    <!-- Dynamic Rows Here -->
+                </tbody>
+            </table>
+        </div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
     <script src="../scripts/config.js"></script>
-    <script src="../scripts/structural.js"></script> 
+    <script>
+        async function loadInventory() {
+            const list = document.getElementById('inventory-list');
+            // Fetching Beams + Tubing merged
+            const sources = [SHEET_CONFIG.IDS.BEAMS, SHEET_CONFIG.IDS.TUBING];
+            let fullHtml = '';
+            
+            for(const id of sources) {
+                try {
+                    const res = await fetch(SHEET_CONFIG.getReadUrl(id));
+                    const csv = await res.text();
+                    const rows = csv.split('\n').slice(1);
+                    rows.forEach(r => {
+                        const [type, size, len, qty] = r.split(',').map(c => c.replace(/"/g,''));
+                        if(type) fullHtml += `
+                            <tr>
+                                <td data-label="Type" class="col-highlight">${type}</td>
+                                <td data-label="Size">${size}</td>
+                                <td data-label="Length">${len}</td>
+                                <td data-label="Stock">${qty}</td>
+                                <td data-label="Actions"><button class="btn-update">+</button></td>
+                            </tr>`;
+                    });
+                } catch(e) {}
+            }
+            list.innerHTML = fullHtml;
+        }
+        auth.onAuthStateChanged(user => user && loadInventory());
+    </script>
 </body>
 </html>

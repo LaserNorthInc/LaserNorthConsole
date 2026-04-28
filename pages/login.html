@@ -2,23 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login | Laser North</title>
-    <link rel="stylesheet" href="../styles/structural.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | LNI Console</title>
+    <link rel="stylesheet" href="../styles/dashboard.css">
     <link rel="stylesheet" href="../styles/login.css">
 </head>
 <body class="login-layout">
     <div id="login-container">
-        <h1>Laser North</h1>
-        <p>Inventory Management Console</p>
+        <h1 style="color:var(--accent); margin-bottom:0;">LNI</h1>
+        <p style="color:var(--text-muted); margin-top:5px; font-size:0.8rem;">INVENTORY CONSOLE</p>
+        
         <button id="google-signin-btn">
-            <img src="https://www.gstatic.com/images/branding/product/1x/g_logo_64dp.png" width="20px">
-            Sign in with Google
+            <img src="https://www.gstatic.com/images/branding/product/1x/g_logo_64dp.png" width="18">
+            SIGN IN WITH GOOGLE
         </button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
     <script src="../scripts/config.js"></script>
     <script src="../scripts/login.js"></script>
 </body>

@@ -1,96 +1,15 @@
-:root {
-    /* Color Palette */
-    --bg-deep: #0f0f10;      /* Near black background */
-    --bg-surface: #1a1b1e;   /* Card/Nav background */
-    --accent-orange: #ff6b00; /* Safety Orange */
-    --accent-hover: #e66000;
-    --text-main: #e4e6eb;
-    --text-muted: #9da3ae;
-    --border-color: #2d2f34;
-    
-    /* Spacing & Effects */
-    --radius: 8px;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
+/* Specific for Inventory pages */
+.col-highlight { color: var(--accent); font-weight: 700; }
 
-body {
-    background-color: var(--bg-deep);
-    color: var(--text-main);
-    font-family: 'Inter', -apple-system, sans-serif;
-    margin: 0;
-    line-height: 1.6;
-}
+.qty-controls { display: flex; align-items: center; gap: 10px; }
 
-/* --- Professional Navigation --- */
-.app-nav {
-    display: flex;
-    align-items: center;
-    background: var(--bg-surface);
-    padding: 0 2rem;
-    height: 70px;
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: var(--shadow);
-}
-
-.nav-brand {
-    color: var(--accent-orange);
-    font-weight: 800;
-    font-size: 1.4rem;
-    letter-spacing: -0.5px;
-    margin-right: 3rem;
-}
-
-.nav-tabs {
-    display: flex;
-    gap: 1.5rem;
-    height: 100%;
-}
-
-.tab {
-    display: flex;
-    align-items: center;
-    padding: 0 0.5rem;
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-    border-bottom: 3px solid transparent;
-}
-
-.tab:hover {
-    color: var(--accent-orange);
-}
-
-.tab.active {
-    color: var(--accent-orange);
-    border-bottom: 3px solid var(--accent-orange);
-}
-
-/* --- Buttons --- */
-.logout-btn {
-    margin-left: auto;
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-muted);
-    padding: 0.6rem 1.2rem;
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all 0.2s;
-}
-
-.logout-btn:hover {
-    background: #ff4444;
+.btn-update {
+    background: #222;
+    border: 1px solid var(--border);
     color: white;
-    border-color: #ff4444;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
-/* --- Layout Containers --- */
-.content-container {
-    padding: 2.5rem;
-    max-width: 1300px;
-    margin: 0 auto;
-}
-
-h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 2rem; color: white; }
+.btn-update:hover { background: var(--accent); border-color: var(--accent); }

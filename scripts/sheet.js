@@ -1,48 +1,65 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    // Verify user is logged in before fetching data
-    firebase.auth().onAuthStateChanged(async (user) => {
+document.addEventListener('DOMContentLoaded', () => {
+    auth.onAuthStateChanged(user => {
         if (user) {
-            await loadSheetInventory();
+            // Check if user email is an admin (Modify with your email)
+            if (user.email === 'admin@lasernorthinc.com') {
+                document.getElementById('admin-add-btn').style.display = 'block';
+            }
+            loadSheetData();
         }
     });
 });
 
-async function loadSheetInventory() {
-    const tableBody = document.getElementById('sheet-table-body');
-    const url = SHEET_CONFIG.getUrl(SHEET_CONFIG.SHEET_STOCK_ID);
-
-    try {
-        const response = await fetch(url);
-        const data = await response.text();
+async function loadSheetData() {
+    const list = document.getElementById('sheet-list');
+    // Fetch from 'Full Sheet' and 'Cropper Sheet'
+    const sources = [
+        {id: SHEET_CONFIG.IDS.FULL_SHEET, gid: SHEET_CONFIG.TABS.STEEL},
+        {id: SHEET_CONFIG.IDS.CROPPER_SHEET, gid: SHEET_CONFIG.TABS.STEEL}
+    ];
+    
+    let html = '';
+    for (const source of sources) {
+        const res = await fetch(SHEET_CONFIG.getTabUrl(source.id, source.gid));
+        const data = await res.text();
+        const rows = data.split('\n').slice(1);
         
-        // Simple CSV Parser (Split by line, then by comma)
-        const rows = data.split('\n').slice(1); // slice(1) skips the header row
-        
-        tableBody.innerHTML = ''; // Clear "Loading" message
-
-        rows.forEach(row => {
-            const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Regex to handle commas inside quotes
-            
-            if (cols.length > 1) {
-                const [material, gauge, width, length, qty] = cols.map(c => c.replace(/"/g, ''));
-                
-                const statusClass = parseInt(qty) < 5 ? 'stock-low' : 'stock-ok';
-                const statusText = parseInt(qty) < 5 ? 'Low' : 'OK';
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="col-highlight">${material}</td>
-                    <td>${gauge}</td>
-                    <td>${width} x ${length}</td>
-                    <td>${qty}</td>
-                    <td><span class="stock-badge ${statusClass}">${statusText}</span></td>
-                    <td><button class="btn-icon">✎</button></td>
-                `;
-                tableBody.appendChild(tr);
-            }
+        rows.forEach(r => {
+            const [mat, gauge, size, qty] = r.split(',').map(c => c.replace(/"/g, ''));
+            if(mat) html += `
+                <tr>
+                    <td data-label="Material" class="col-highlight">${mat}</td>
+                    <td data-label="Gauge">${gauge}</td>
+                    <td data-label="Size">${size}</td>
+                    <td data-label="Qty">${qty}</td>
+                    <td data-label="Status"><span class="stock-badge ${qty < 5 ? 'stock-low' : 'stock-ok'}">${qty < 5 ? 'Low' : 'OK'}</span></td>
+                </tr>`;
         });
-    } catch (error) {
-        console.error("Error loading Sheet data:", error);
-        tableBody.innerHTML = '<tr><td colspan="6">Error loading data. Check Sheet permissions.</td></tr>';
+    }
+    list.innerHTML = html;
+}
+
+function toggleAddForm() {
+    const form = document.getElementById('add-item-form');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function submitNewItem() {
+    const payload = {
+        sheetId: SHEET_CONFIG.IDS.FULL_SHEET, // Target sheet
+        material: document.getElementById('new-material').value,
+        gauge: document.getElementById('new-gauge').value,
+        size: document.getElementById('new-size').value,
+        qty: document.getElementById('new-qty').value
+    };
+
+    const response = await fetch(SHEET_CONFIG.SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+        alert("Item Added!");
+        location.reload();
     }
 }

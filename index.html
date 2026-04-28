@@ -2,21 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Laser North Console | Loading...</title>
-    <link rel="stylesheet" href="styles/structural.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LNI Console | Redirecting...</title>
+    <link rel="stylesheet" href="styles/dashboard.css">
 </head>
-<body>
-    <div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#0a0a0a; color:#00e676;">
-        <h2>Initializing...</h2>
+<body style="display:flex; justify-content:center; align-items:center; height:100vh; background:var(--bg-deep);">
+    <div style="color:var(--accent); font-family:sans-serif; text-align:center;">
+        <h2>LASER NORTH CONSOLE</h2>
+        <p>Checking Authentication...</p>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
     <script src="scripts/config.js"></script>
-
     <script>
-        firebase.auth().onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(user => {
             window.location.href = user ? "pages/dashboard.html" : "pages/login.html";
         });
     </script>
