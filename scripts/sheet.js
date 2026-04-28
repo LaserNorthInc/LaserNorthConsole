@@ -29,17 +29,50 @@ function populateDropdowns() {
     }
 }
 
+/* SHOP FLOOR LOGIC: Updated to handle 'All' view and specific tab editing */
+
 async function loadSheetData() {
     const list = document.getElementById('sheet-list');
-    const selectedTab = document.getElementById('filter-type').value || DATA_OPTIONS.materials[0];
-    list.innerHTML = '<tr><td colspan="10">Fetching ' + selectedTab + '...</td></tr>';
+    const selectedTab = document.getElementById('filter-type').value || "All";
+    list.innerHTML = '<tr><td colspan="10">Scanning ' + selectedTab + ' Inventory...</td></tr>';
     
     try {
-        // Fetch specific tab from Google Script
         const res = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${SHEET_CONFIG.IDS.FULL_SHEET}&tab=${selectedTab}`);
         inventoryData = await res.json();
-        filterInventory(); // Initial render
-    } catch(e) { list.innerHTML = '<tr><td colspan="10">Error loading data.</td></tr>'; }
+        filterInventory(); 
+    } catch(e) { 
+        list.innerHTML = '<tr><td colspan="10">Error loading data. Make sure tabs are named correctly.</td></tr>'; 
+    }
+}
+
+// Updated 'POST' helper to include the tabName
+async function postToGoogle(payload) {
+    payload.sheetId = SHEET_CONFIG.IDS.FULL_SHEET;
+    // CRITICAL: We use the tabName assigned to the specific item row
+    if(!payload.tabName) payload.tabName = window.currentTab; 
+    
+    try {
+        await fetch(SHEET_CONFIG.SCRIPT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify(payload) 
+        });
+        location.reload();
+    } catch(e) { alert("Error connecting to sheet."); }
+}
+
+// When clicking Reserve or Use, we now store which tab that item lives on
+function openReserveModal(row, id, tab) {
+    window.currentRow = row;
+    window.currentTab = tab; // Important for 'All' view
+    document.getElementById('modal-id').textContent = id;
+    document.getElementById('reserve-modal').style.display = 'flex';
+}
+
+async function useItem(row, id, tab) {
+    if(!confirm("Remove " + id + " from " + tab + " inventory?")) return;
+    window.currentTab = tab;
+    await postToGoogle({ action: 'use', rowNumber: row });
 }
 
 function renderTable(data) {
@@ -49,7 +82,7 @@ function renderTable(data) {
         if(item.id) {
             const reserveClass = item.reserve === 'AVAILABLE' ? 'status-available' : 'status-reserved';
             html += `<tr>
-                <td data-label="ID" style="color:var(--accent); font-weight:700;">${item.id}</td>
+                <td data-label="ID" class="col-highlight">${item.id}</td>
                 <td data-label="Type">${item.type}</td>
                 <td data-label="Thick">${item.thickness}</td>
                 <td data-label="Size">${item.size}</td>
@@ -59,15 +92,14 @@ function renderTable(data) {
                 <td data-label="Reserve" class="${reserveClass}">${item.reserve}</td>
                 <td data-label="User">${item.user}</td>
                 <td data-label="Actions">
-                    <button onclick="openReserveModal(${item.rowNumber}, '${item.id}')" style="color:var(--accent); border:1px solid var(--accent); background:none; cursor:pointer; font-size:10px; padding:2px 5px;">RESERVE</button>
-                    <button onclick="useItem(${item.rowNumber}, '${item.id}')" style="color:#ff4444; border:1px solid #ff4444; background:none; cursor:pointer; font-size:10px; padding:2px 5px;">USE</button>
+                    <button onclick="openReserveModal(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn-reserve">RESERVE</button>
+                    <button onclick="useItem(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn-use">USE</button>
                 </td>
             </tr>`;
         }
     });
-    list.innerHTML = html || '<tr><td colspan="10">No items found matching filters.</td></tr>';
+    list.innerHTML = html || '<tr><td colspan="10">No items found.</td></tr>';
 }
-
 function filterInventory() {
     const fThick = document.getElementById('filter-thick').value;
     const fLoc = document.getElementById('filter-loc').value;
