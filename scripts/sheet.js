@@ -17,36 +17,39 @@ function generateID() {
 
 async function loadSheetData() {
     const list = document.getElementById('sheet-list');
-    list.innerHTML = '<tr><td colspan="10">Loading inventory...</td></tr>';
+    list.innerHTML = '<tr><td colspan="10">Loading Private Inventory...</td></tr>';
     
     try {
-        const res = await fetch(SHEET_CONFIG.getReadUrl(SHEET_CONFIG.IDS.FULL_SHEET));
-        const data = await res.text();
-        const rows = data.split('\n').slice(1);
-        let html = '';
+        // We call your Script URL and pass the Sheet ID as a parameter
+        const res = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${SHEET_CONFIG.IDS.FULL_SHEET}`);
+        const data = await res.json();
 
-        rows.forEach(r => {
-            const cols = r.split(',').map(c => c.replace(/"/g, ''));
-            if(cols[0]) {
-                const [id, type, thick, size, loc, cert, date, reserve, user, notes] = cols;
-                const reserveClass = reserve === 'AVAILABLE' ? 'status-available' : 'status-reserved';
+        if (data.error) throw new Error(data.error);
+
+        let html = '';
+        data.forEach(item => {
+            if(item.id) {
+                const reserveClass = item.reserve === 'AVAILABLE' ? 'status-available' : 'status-reserved';
                 html += `
                     <tr>
-                        <td data-label="ID" class="col-highlight">${id}</td>
-                        <td data-label="Type">${type}</td>
-                        <td data-label="Thickness">${thick}</td>
-                        <td data-label="Size">${size}</td>
-                        <td data-label="Location">${loc}</td>
-                        <td data-label="Cert">${cert}</td>
-                        <td data-label="Date Added">${date}</td>
-                        <td data-label="Reserve" class="${reserveClass}">${reserve}</td>
-                        <td data-label="User">${user}</td>
-                        <td data-label="Notes">${notes}</td>
+                        <td data-label="ID" class="col-highlight">${item.id}</td>
+                        <td data-label="Type">${item.type}</td>
+                        <td data-label="Thickness">${item.thickness}</td>
+                        <td data-label="Size">${item.size}</td>
+                        <td data-label="Location">${item.location}</td>
+                        <td data-label="Cert">${item.cert}</td>
+                        <td data-label="Date Added">${item.dateAdded}</td>
+                        <td data-label="Reserve" class="${reserveClass}">${item.reserve}</td>
+                        <td data-label="User">${item.user}</td>
+                        <td data-label="Notes">${item.notes}</td>
                     </tr>`;
             }
         });
         list.innerHTML = html;
-    } catch(e) { list.innerHTML = '<tr><td colspan="10">Error loading sheet data.</td></tr>'; }
+    } catch(e) {
+        console.error(e);
+        list.innerHTML = '<tr><td colspan="10">Error: Could not access private data.</td></tr>';
+    }
 }
 
 function toggleForm() {
