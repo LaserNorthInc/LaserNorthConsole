@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sheet Inventory | LNI</title>
+    <title>Sheet Inventory | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
     <style>
         .status-available { color: #00e676; font-weight: bold; }
         .status-reserved { color: var(--accent); font-weight: bold; }
         input, select { background:#0a0a0b; color:white; border:1px solid var(--border); padding:10px; border-radius:4px; width:100%; box-sizing:border-box; }
-        .btn-submit { background:var(--accent); color:black; font-weight:800; border:none; padding:10px; border-radius:4px; cursor:pointer; }
+        label { font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -25,51 +25,56 @@
 
     <main class="content-container">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h1>Sheet Inventory</h1>
+            <h1 style="margin:0;">Sheet Inventory</h1>
             <button class="btn-submit" onclick="toggleForm()">+ ADD REMNANT</button>
         </div>
 
         <!-- FILTERS -->
         <section class="inventory-card" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
             <div><label>Material Tab</label><select id="filter-type" onchange="loadSheetData()"></select></div>
-            <div><label>Thickness</label><select id="filter-thick" onchange="filterInventory()"><option value="">All</option></select></div>
-            <div><label>Location</label><select id="filter-loc" onchange="filterInventory()"><option value="">All</option></select></div>
-            <div><label>Cert # Search</label><input type="text" id="filter-cert" onkeyup="filterInventory()" placeholder="Search..."></div>
+            <div><label>Thickness</label><select id="filter-thick" onchange="filterInventory()"><option value="">All Thicknesses</option></select></div>
+            <div><label>Dimensions</label><input type="text" id="filter-size" onkeyup="filterInventory()" placeholder="Search size..."></div>
+            <div><label>Location</label><select id="filter-loc" onchange="filterInventory()"><option value="">All Racks</option></select></div>
+            <div><label>Cert #</label><input type="text" id="filter-cert" onkeyup="filterInventory()" placeholder="Search heat #..."></div>
         </section>
 
         <!-- ADD FORM -->
         <section id="add-item-form" class="inventory-card" style="display:none; border-left:4px solid var(--accent);">
-            <h3>Upload New Stock</h3>
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px;">
-                <select id="new-type"></select>
-                <select id="new-thickness"></select>
-                <input type="text" id="new-size" placeholder="Size (L x W)">
-                <select id="new-location"></select>
-                <input type="text" id="new-cert" placeholder="Cert #">
-                <input type="text" id="new-notes" placeholder="Notes">
-                <button class="btn-submit" onclick="submitNewItem()">UPLOAD</button>
+            <h3 style="margin:0 0 15px 0;">New Remnant Entry</h3>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px;">
+                <div><label>Type</label><select id="new-type"></select></div>
+                <div><label>Thick</label><select id="new-thickness"></select></div>
+                <div><label>Length (in)</label><input type="number" id="new-len" placeholder="0.00"></div>
+                <div><label>Width (in)</label><input type="number" id="new-wid" placeholder="0.00"></div>
+                <div><label>Loc</label><select id="new-location"></select></div>
+                <div><label>Cert</label><input type="text" id="new-cert" placeholder="Heat #"></div>
+                <div><label>Notes</label><input type="text" id="new-notes" placeholder="Notes"></div>
+                <div style="display:flex; align-items:flex-end;"><button class="btn-submit" style="width:100%" onclick="submitNewItem()">UPLOAD</button></div>
             </div>
         </section>
 
-        <div class="inventory-card">
+        <div class="inventory-card" style="padding:0; overflow-x:auto;">
             <table>
                 <thead>
-                    <tr><th>ID</th><th>Type</th><th>Thick</th><th>Size</th><th>Location</th><th>Cert</th><th>Added</th><th>Reserve</th><th>User</th><th>Actions</th></tr>
+                    <tr><th>ID</th><th>Type</th><th>Thick</th><th>Size</th><th>Location</th><th>Cert</th><th>Added</th><th>Reserved</th><th>User</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="sheet-list"></tbody>
             </table>
         </div>
     </main>
 
-    <!-- MODAL -->
-    <div id="reserve-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center;">
-        <div class="inventory-card" style="width:300px; text-align:center;">
+    <!-- RESERVE MODAL -->
+    <div id="reserve-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; justify-content:center; align-items:center;">
+        <div class="inventory-card" style="width:320px; text-align:center;">
             <h3>Reserve Item</h3>
-            <p id="modal-id" style="color:var(--accent); font-weight:bold;"></p>
-            <input type="text" id="modal-job" placeholder="Enter Job #" style="margin-bottom:15px;">
+            <p id="modal-id" style="color:var(--accent); font-weight:bold; font-size:1.2rem;"></p>
+            <div style="margin:20px 0;">
+                <label>Job Number</label>
+                <input type="text" id="modal-job" placeholder="Enter Job #">
+            </div>
             <div style="display:flex; gap:10px;">
-                <button class="btn-submit" style="flex:1" onclick="submitReserve()">Confirm</button>
-                <button onclick="closeModal()" style="flex:1; background:none; color:white; border:1px solid #444; border-radius:4px; cursor:pointer;">Cancel</button>
+                <button class="btn-submit" style="flex:1" onclick="submitReserve()">RESERVE</button>
+                <button onclick="closeModal()" style="flex:1; background:none; color:white; border:1px solid #444; border-radius:4px; cursor:pointer;">CANCEL</button>
             </div>
         </div>
     </div>

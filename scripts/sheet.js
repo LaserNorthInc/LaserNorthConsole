@@ -7,17 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function toggleMenu() { document.getElementById('nav-links').classList.toggle('open'); }
 
-// Populate all selects on the page from constants
 function populateDropdowns() {
     const selects = {
         'filter-type': DATA_OPTIONS.materials,
-        'new-type': DATA_OPTIONS.materials,
+        'new-type': DATA_OPTIONS.materials.filter(m => m !== 'All'),
         'filter-thick': DATA_OPTIONS.thicknesses,
         'new-thickness': DATA_OPTIONS.thicknesses,
         'filter-loc': DATA_OPTIONS.locations,
         'new-location': DATA_OPTIONS.locations
     };
-
     for (let id in selects) {
         const el = document.getElementById(id);
         if (!el) continue;
@@ -29,50 +27,30 @@ function populateDropdowns() {
     }
 }
 
-/* SHOP FLOOR LOGIC: Updated to handle 'All' view and specific tab editing */
-
 async function loadSheetData() {
     const list = document.getElementById('sheet-list');
     const selectedTab = document.getElementById('filter-type').value || "All";
-    list.innerHTML = '<tr><td colspan="10">Scanning ' + selectedTab + ' Inventory...</td></tr>';
-    
+    list.innerHTML = '<tr><td colspan="10">Loading ' + selectedTab + '...</td></tr>';
     try {
         const res = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${SHEET_CONFIG.IDS.FULL_SHEET}&tab=${selectedTab}`);
         inventoryData = await res.json();
-        filterInventory(); 
-    } catch(e) { 
-        list.innerHTML = '<tr><td colspan="10">Error loading data. Make sure tabs are named correctly.</td></tr>'; 
-    }
+        filterInventory();
+    } catch(e) { list.innerHTML = '<tr><td colspan="10">Error fetching data. Check script URL.</td></tr>'; }
 }
 
-// Updated 'POST' helper to include the tabName
-async function postToGoogle(payload) {
-    payload.sheetId = SHEET_CONFIG.IDS.FULL_SHEET;
-    // CRITICAL: We use the tabName assigned to the specific item row
-    if(!payload.tabName) payload.tabName = window.currentTab; 
-    
-    try {
-        await fetch(SHEET_CONFIG.SCRIPT_URL, { 
-            method: 'POST', 
-            mode: 'no-cors', 
-            body: JSON.stringify(payload) 
-        });
-        location.reload();
-    } catch(e) { alert("Error connecting to sheet."); }
-}
+function filterInventory() {
+    const fThick = document.getElementById('filter-thick').value;
+    const fLoc = document.getElementById('filter-loc').value;
+    const fCert = document.getElementById('filter-cert').value.toLowerCase();
+    const fSize = document.getElementById('filter-size').value.toLowerCase();
 
-// When clicking Reserve or Use, we now store which tab that item lives on
-function openReserveModal(row, id, tab) {
-    window.currentRow = row;
-    window.currentTab = tab; // Important for 'All' view
-    document.getElementById('modal-id').textContent = id;
-    document.getElementById('reserve-modal').style.display = 'flex';
-}
-
-async function useItem(row, id, tab) {
-    if(!confirm("Remove " + id + " from " + tab + " inventory?")) return;
-    window.currentTab = tab;
-    await postToGoogle({ action: 'use', rowNumber: row });
+    const filtered = inventoryData.filter(item => {
+        return (!fThick || item.thickness === fThick) &&
+               (!fLoc || item.location === fLoc) &&
+               (!fCert || item.cert.toLowerCase().includes(fCert)) &&
+               (!fSize || item.size.toLowerCase().includes(fSize));
+    });
+    renderTable(filtered);
 }
 
 function renderTable(data) {
@@ -82,7 +60,7 @@ function renderTable(data) {
         if(item.id) {
             const reserveClass = item.reserve === 'AVAILABLE' ? 'status-available' : 'status-reserved';
             html += `<tr>
-                <td data-label="ID" class="col-highlight">${item.id}</td>
+                <td data-label="ID" style="color:var(--accent); font-weight:700;">${item.id}</td>
                 <td data-label="Type">${item.type}</td>
                 <td data-label="Thick">${item.thickness}</td>
                 <td data-label="Size">${item.size}</td>
@@ -92,29 +70,17 @@ function renderTable(data) {
                 <td data-label="Reserve" class="${reserveClass}">${item.reserve}</td>
                 <td data-label="User">${item.user}</td>
                 <td data-label="Actions">
-                    <button onclick="openReserveModal(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn-reserve">RESERVE</button>
-                    <button onclick="useItem(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn-use">USE</button>
+                    <button onclick="openReserveModal(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn btn-reserve">RESERVE</button>
+                    <button onclick="useItem(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn btn-use">USE</button>
                 </td>
             </tr>`;
         }
     });
-    list.innerHTML = html || '<tr><td colspan="10">No items found.</td></tr>';
-}
-function filterInventory() {
-    const fThick = document.getElementById('filter-thick').value;
-    const fLoc = document.getElementById('filter-loc').value;
-    const fCert = document.getElementById('filter-cert').value.toLowerCase();
-
-    const filtered = inventoryData.filter(item => {
-        return (!fThick || item.thickness === fThick) &&
-               (!fLoc || item.location === fLoc) &&
-               (!fCert || item.cert.toLowerCase().includes(fCert));
-    });
-    renderTable(filtered);
+    list.innerHTML = html || '<tr><td colspan="10">No matches found.</td></tr>';
 }
 
-function openReserveModal(row, id) {
-    window.currentRow = row;
+function openReserveModal(row, id, tab) {
+    window.currentRow = row; window.currentTab = tab;
     document.getElementById('modal-id').textContent = id;
     document.getElementById('reserve-modal').style.display = 'flex';
 }
@@ -124,23 +90,25 @@ function closeModal() { document.getElementById('reserve-modal').style.display =
 async function submitReserve() {
     const job = document.getElementById('modal-job').value;
     if(!job) return alert("Enter Job #");
-    await postToGoogle({ action: 'reserve', rowNumber: window.currentRow, jobNum: job });
+    await postToGoogle({ action: 'reserve', rowNumber: window.currentRow, tabName: window.currentTab, jobNum: job });
 }
 
-async function useItem(row, id) {
-    if(!confirm("Remove " + id + " from inventory?")) return;
-    await postToGoogle({ action: 'use', rowNumber: row });
+async function useItem(row, id, tab) {
+    if(!confirm("USE ITEM: Remove " + id + " from " + tab + " inventory?")) return;
+    await postToGoogle({ action: 'use', rowNumber: row, tabName: tab });
 }
 
 async function submitNewItem() {
     const type = document.getElementById('new-type').value;
+    const len = document.getElementById('new-len').value;
+    const wid = document.getElementById('new-wid').value;
     const payload = {
         action: 'add',
         tabName: type,
         id: 'LN-' + Math.random().toString(36).substr(2,4).toUpperCase(),
         type: type,
         thickness: document.getElementById('new-thickness').value,
-        size: document.getElementById('new-size').value,
+        size: len + ' x ' + wid,
         location: document.getElementById('new-location').value,
         cert: document.getElementById('new-cert').value,
         notes: document.getElementById('new-notes').value,
@@ -153,11 +121,10 @@ async function submitNewItem() {
 
 async function postToGoogle(payload) {
     payload.sheetId = SHEET_CONFIG.IDS.FULL_SHEET;
-    if(!payload.tabName) payload.tabName = document.getElementById('filter-type').value;
     try {
         await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
         location.reload();
-    } catch(e) { alert("Error connecting to sheet."); }
+    } catch(e) { alert("Network Error: Action failed."); }
 }
 
 function toggleForm() {
