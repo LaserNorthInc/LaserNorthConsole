@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../styles/structural.css">
+    <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <h1>Operations Dashboard</h1>
+        <button id="logoutBtn" class="nav-btn">Logout</button>
+    </nav>
+
+    <main class="dashboard-grid">
+        <a href="sheet.html" class="dash-card">
+            <div class="icon">📦</div>
+            <h3>Sheet Inventory</h3>
+            <p>Manage full sheets & croppers</p>
+        </a>
+
+        <div class="dash-card disabled">
+            <div class="icon">🛠️</div>
+            <h3>Maintenance</h3>
+            <p>Coming Soon</p>
+        </div>
+
+        <div class="dash-card disabled">
+            <div class="icon">📋</div>
+            <h3>Recent Logs</h3>
+            <p>View latest entries</p>
+        </div>
+    </main>
+
+    <script type="module" src="../scripts/dashboard.js"></script>
+</body>
+</html>

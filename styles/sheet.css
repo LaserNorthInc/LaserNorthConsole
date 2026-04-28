@@ -1,0 +1,92 @@
+/* View Toggle Buttons */
+.toggle-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 2rem;
+}
+
+.toggle-container button {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text-dim);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.toggle-container button.active {
+    border-color: var(--accent-blue);
+    color: white;
+    background: rgba(52, 152, 219, 0.1);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+}
+
+/* Form Styling */
+#inventoryForm {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    background: #2a2a2a;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: white;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+/* Specific styling for the dimensions (LxW) */
+.flex-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.flex-row input {
+    margin-bottom: 0;
+}
+
+/* Action Button */
+#submitBtn {
+    width: 100%;
+    padding: 15px;
+    background: var(--accent-blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+#submitBtn:active {
+    transform: scale(0.98);
+}
+
+#submitBtn:disabled {
+    background: #444;
+    cursor: not-allowed;
+}

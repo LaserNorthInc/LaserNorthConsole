@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Hub</title>
+    <link rel="stylesheet" href="../styles/structural.css">
+    <link rel="stylesheet" href="../styles/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <h2>Operations Hub</h2>
+            <p>Please sign in to continue</p>
+            <form id="loginForm">
+                <label>Email</label>
+                <input type="email" id="email" required placeholder="name@company.com">
+                
+                <label>Password</label>
+                <input type="password" id="password" required placeholder="••••••••">
+                
+                <button type="submit" id="loginBtn">Sign In</button>
+            </form>
+            <div id="errorMessage" class="error"></div>
+        </div>
+    </div>
+    <script type="module" src="../scripts/login.js"></script>
+</body>
+</html>
