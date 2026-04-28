@@ -1,22 +1,15 @@
-import { auth } from './config.js';
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.x.x/firebase-auth.js";
-
-// 1. Protect the page
-export function protectPage() {
-    onAuthStateChanged(auth, (user) => {
-        if (!user) {
-            // No user is signed in, redirect to login
-            window.location.href = "login.html";
-        }
-    });
-}
-
-// 2. Logout function
-export async function logoutUser() {
-    try {
-        await signOut(auth);
-        window.location.href = "login.html";
-    } catch (error) {
-        console.error("Error signing out:", error);
+// scripts/auth.js
+// Assuming you link Firebase Auth in your HTML
+function checkAuthState() {
+    const user = sessionStorage.getItem('loggedInUser'); // Simple placeholder
+    if (!user && !window.location.pathname.includes('login.html')) {
+        window.location.href = '../pages/login.html';
     }
 }
+
+function logout() {
+    sessionStorage.removeItem('loggedInUser');
+    window.location.href = '../pages/login.html';
+}
+
+checkAuthState();

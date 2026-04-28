@@ -1,70 +1,41 @@
-import { auth, GOOGLE_SCRIPT_URL } from './config.js';
-
-let currentView = 'full';
-
-// Handle View Toggling
-window.setView = (view) => {
-    currentView = view;
-    const dimGroup = document.getElementById('dimensions-group');
-    
-    // UI Feedback
-    document.getElementById('btnFull').classList.toggle('active', view === 'full');
-    document.getElementById('btnCropper').classList.toggle('active', view === 'cropper');
-
-    if (view === 'cropper') {
-        dimGroup.innerHTML = `
-            <label>Dimensions (inches)</label>
-            <div class="flex-row">
-                <input type="number" id="length" placeholder="Length" required>
-                <span>x</span>
-                <input type="number" id="width" placeholder="Width" required>
-            </div>
-            <label>Quantity</label>
-            <input type="number" id="qty" required>
-        `;
-    } else {
-        dimGroup.innerHTML = `
-            <label>Quantity (Full Sheets)</label>
-            <input type="number" id="qty" required>
-        `;
-    }
-};
-
-// Form Submission
-document.getElementById('inventoryForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = {
-        type: currentView,
-        material: document.getElementById('material').value,
-        thickness: document.getElementById('thickness').value,
-        qty: document.getElementById('qty').value,
-        dimensions: currentView === 'cropper' 
-            ? `${document.getElementById('length').value}x${document.getElementById('width').value}` 
-            : 'Full'
-    };
-
-    // Send to Google Sheets
-    submitToGoogle(formData);
+// scripts/sheet.js
+document.addEventListener('DOMContentLoaded', () => {
+    initSheetApp();
 });
 
-async function submitToGoogle(data) {
-    const status = document.getElementById('submitBtn');
-    status.disabled = true;
-    status.innerText = "Saving...";
+async function initSheetApp() {
+    console.log("Initializing Sheet Inventory...");
+    const data = await fetchSheetData();
+    renderSheetTable(data);
+}
 
-    try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(data)
-        });
-        alert("Inventory Updated!");
-        document.getElementById('inventoryForm').reset();
-    } catch (err) {
-        console.error(err);
-    } finally {
-        status.disabled = false;
-        status.innerText = "Log Entry";
-    }
+async function fetchSheetData() {
+    // Logic for Sheet-specific data
+    return [
+        { material: "MS", gauge: "10ga", size: "48x96", qty: 25 },
+        { material: "AL", gauge: ".125", size: "60x120", qty: 8 }
+    ];
+}
+
+function renderSheetTable(items) {
+    const container = document.getElementById('sheet-output');
+    if (!container) return;
+
+    container.innerHTML = `
+        <table class="inventory-table">
+            <thead>
+                <tr><th>Material</th><th>Gauge</th><th>Size</th><th>Qty</th></tr>
+            </thead>
+            <tbody>
+                ${items.map(i => `
+                    <tr>
+                        <td>${i.material}</td>
+                        <td>${i.gauge}</td>
+                        <td>${i.size}</td>
+                        <td>${i.qty}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
 }

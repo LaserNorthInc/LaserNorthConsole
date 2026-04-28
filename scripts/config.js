@@ -1,22 +1,22 @@
-import { auth } from './config.js';
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.x.x/firebase-auth.js";
+// scripts/config.js
+const CONFIG = {
+    // Firebase Configuration
+    FIREBASE_CONFIG: {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    },
+    // Sheet IDs
+    SHEET_IDS: {
+        STRUCTURAL: "YOUR_STRUCTURAL_SHEET_ID",
+        SHEET: "YOUR_SHEET_INVENTORY_ID"
+    },
+    // Common settings
+    APP_NAME: "Laser North Console"
+};
 
-// 1. Protect the page
-export function protectPage() {
-    onAuthStateChanged(auth, (user) => {
-        if (!user) {
-            // No user is signed in, redirect to login
-            window.location.href = "login.html";
-        }
-    });
-}
-
-// 2. Logout function
-export async function logoutUser() {
-    try {
-        await signOut(auth);
-        window.location.href = "login.html";
-    } catch (error) {
-        console.error("Error signing out:", error);
-    }
-}
+// Global helper for fetching (example for Google Sheets)
+const getSheetUrl = (id) => `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`;
