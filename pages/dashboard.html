@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | LNI</title>
+    <!-- Dashboard styles for navigation and overview cards -->
     <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
 <body>
+    <!-- Top navigation bar with page links and logout button -->
     <nav class="app-nav">
         <div class="nav-brand">LNI CONSOLE</div>
         <div class="nav-tabs">
@@ -19,6 +21,7 @@
 
     <main class="content-container">
         <h1>Overview</h1>
+        <!-- Summary cards for the current inventory counts -->
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
             <div class="inventory-card" style="padding:20px; border-top: 4px solid var(--accent);">
                 <h3 style="margin-top:0; color:var(--text-muted);">STRUCTURAL STOCK</h3>
@@ -31,6 +34,7 @@
         </div>
     </main>
 
+    <!-- Firebase authentication scripts and shared configuration -->
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
     <script src="../scripts/config.js"></script>

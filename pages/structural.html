@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Structural | LNI</title>
+    <!-- Shared navigation and structural inventory styles -->
     <link rel="stylesheet" href="../styles/dashboard.css">
     <link rel="stylesheet" href="../styles/structural.css">
 </head>
 <body>
+    <!-- Top navigation menu with active page indicator -->
     <nav class="app-nav">
         <div class="nav-brand">LNI CONSOLE</div>
         <div class="nav-tabs">
@@ -19,7 +21,8 @@
     </nav>
 
     <main class="content-container">
-        <h1>Structural (Beams/Tubes)</h1>
+        <h1>Structural</h1>
+        <!-- Table where structural inventory rows are filled in using JavaScript -->
         <div class="inventory-card">
             <table>
                 <thead>
@@ -36,9 +39,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
     <script src="../scripts/config.js"></script>
     <script>
+        // Load the inventory data from Google Sheets and render it into the table.
         async function loadInventory() {
             const list = document.getElementById('inventory-list');
-            // Fetching Beams + Tubing merged
+            // Combine the beams and tubing sheets when fetching inventory.
             const sources = [SHEET_CONFIG.IDS.BEAMS, SHEET_CONFIG.IDS.TUBING];
             let fullHtml = '';
             
@@ -58,10 +62,14 @@
                                 <td data-label="Actions"><button class="btn-update">+</button></td>
                             </tr>`;
                     });
-                } catch(e) {}
+                } catch(e) {
+                    // Ignore failures so the page can still show partial data.
+                }
             }
             list.innerHTML = fullHtml;
         }
+
+        // Only load inventory after Firebase confirms the user is logged in.
         auth.onAuthStateChanged(user => user && loadInventory());
     </script>
 </body>

@@ -1,7 +1,7 @@
 :root {
     --bg-deep: #0f0f10;
     --bg-surface: #1a1b1e;
-    --accent: #ff6b00; /* Safety Orange */
+    --accent: #ff6b00; /* LNI Safety Orange */
     --accent-hover: #e66000;
     --text: #e4e6eb;
     --text-muted: #9da3ae;
@@ -16,11 +16,13 @@ body {
     margin: 0;
 }
 
+/* --- NAVIGATION LOGIC --- */
 .app-nav {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     background: var(--bg-surface);
-    padding: 0 2rem;
+    padding: 0 1.5rem;
     height: 70px;
     border-bottom: 1px solid var(--border);
     position: sticky;
@@ -28,8 +30,10 @@ body {
     z-index: 1000;
 }
 
-.nav-brand { color: var(--accent); font-weight: 800; font-size: 1.4rem; margin-right: 3rem; }
-.nav-tabs { display: flex; gap: 1.5rem; height: 100%; }
+.nav-brand { color: var(--accent); font-weight: 800; font-size: 1.4rem; }
+
+.nav-tabs { display: flex; gap: 1rem; height: 100%; }
+
 .tab {
     display: flex; align-items: center; padding: 0 0.5rem;
     color: var(--text-muted); text-decoration: none; font-weight: 600;
@@ -37,26 +41,34 @@ body {
 }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-.logout-btn {
-    margin-left: auto; background: transparent; border: 1px solid var(--border);
-    color: var(--text-muted); padding: 0.5rem 1rem; border-radius: var(--radius); cursor: pointer;
+.mobile-menu-btn { display: none; background: none; border: 1px solid var(--border); color: var(--accent); padding: 8px; border-radius: 4px; cursor: pointer; }
+
+/* MOBILE HEADER FIX: Collapsible menu */
+@media (max-width: 768px) {
+    .mobile-menu-btn { display: block; }
+    .nav-tabs {
+        display: none; /* Hide by default on mobile */
+        position: absolute; top: 70px; left: 0; width: 100%;
+        background: var(--bg-surface); flex-direction: column;
+        height: auto; border-bottom: 1px solid var(--border);
+    }
+    .nav-tabs.open { display: flex; }
+    .tab { padding: 15px; border-bottom: 1px solid var(--border); border-left: 4px solid transparent; }
+    .tab.active { border-left-color: var(--accent); border-bottom-color: var(--border); }
 }
 
-.content-container { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+/* --- REUSABLE SHOP FLOOR CARDS --- */
+.content-container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+.inventory-card { background: var(--bg-surface); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.5rem; }
 
-.inventory-card {
-    background: var(--bg-surface); border-radius: var(--radius);
-    border: 1px solid var(--border); overflow: hidden; margin-bottom: 2rem;
-}
-
+/* TABLE TO CARD CONVERSION (MOBILE) */
 table { width: 100%; border-collapse: collapse; }
 th { background: #111; padding: 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); }
 td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
 
-/* Mobile Card Layout */
 @media (max-width: 768px) {
     thead { display: none; }
-    tr { display: block; margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-surface); }
-    td { display: flex; justify-content: space-between; padding: 0.8rem 1rem; border: none; border-bottom: 1px solid #222; }
+    tr { display: block; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 5px; }
+    td { display: flex; justify-content: space-between; padding: 0.6rem 1rem; border: none; }
     td::before { content: attr(data-label); font-weight: bold; color: var(--accent); font-size: 0.8rem; }
 }

@@ -1,3 +1,4 @@
+/* Login page layout for the Google sign-in screen. */
 body.login-layout {
     display: flex;
     justify-content: center;
@@ -6,6 +7,7 @@ body.login-layout {
     background: radial-gradient(circle at center, #1a1b1e 0%, #0f0f10 100%);
 }
 
+/* Center card that contains the login button. */
 #login-container {
     background: var(--bg-surface);
     padding: 3rem;
@@ -16,6 +18,7 @@ body.login-layout {
     box-shadow: 0 20px 40px rgba(0,0,0,0.6);
 }
 
+/* Styled Google sign-in button for the login page. */
 #google-signin-btn {
     margin-top: 2rem;
     display: flex;

@@ -1,26 +1,19 @@
-#add-item-form {
-    background: var(--bg-surface);
-    border-left: 4px solid var(--accent);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.form-grid {
+/* Filter Bar Design */
+.filter-bar {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
+    gap: 10px;
+    padding: 15px;
 }
 
-input {
+input, select {
     background: #0a0a0b;
     border: 1px solid var(--border);
     color: var(--text);
     padding: 10px;
     border-radius: 4px;
-    outline: none;
+    font-size: 0.9rem;
 }
-
-input:focus { border-color: var(--accent); }
 
 .btn-submit {
     background: var(--accent);
@@ -30,8 +23,9 @@ input:focus { border-color: var(--accent); }
     cursor: pointer;
     border-radius: 4px;
     padding: 10px;
+    text-transform: uppercase;
 }
 
-.col-highlight { color: var(--accent); font-weight: 700; }
 .status-available { color: #00e676; font-weight: bold; }
 .status-reserved { color: var(--accent); font-weight: bold; }
+.col-highlight { color: var(--accent); font-weight: 700; }

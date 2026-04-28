@@ -1,8 +1,10 @@
-/* Specific for Inventory pages */
+/* Structural page specific styles for buttons and row highlights. */
 .col-highlight { color: var(--accent); font-weight: 700; }
 
+/* Layout for quantity controls and action buttons. */
 .qty-controls { display: flex; align-items: center; gap: 10px; }
 
+/* Button style for the structural inventory action buttons. */
 .btn-update {
     background: #222;
     border: 1px solid var(--border);
@@ -12,4 +14,5 @@
     cursor: pointer;
 }
 
+/* Hover state for action buttons to show the accent color. */
 .btn-update:hover { background: var(--accent); border-color: var(--accent); }

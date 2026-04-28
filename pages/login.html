@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | LNI Console</title>
+    <!-- Shared dashboard styling plus login-specific layout styles -->
     <link rel="stylesheet" href="../styles/dashboard.css">
     <link rel="stylesheet" href="../styles/login.css">
 </head>
 <body class="login-layout">
+    <!-- Login card with a single Google Sign-In button -->
     <div id="login-container">
         <h1 style="color:var(--accent); margin-bottom:0;">LNI</h1>
         <p style="color:var(--text-muted); margin-top:5px; font-size:0.8rem;">INVENTORY CONSOLE</p>
@@ -18,6 +20,7 @@
         </button>
     </div>
 
+    <!-- Firebase scripts for authentication and shared app config -->
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
     <script src="../scripts/config.js"></script>

@@ -4,18 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LNI Console | Redirecting...</title>
+    <!-- Use shared dashboard styles for the landing page layout -->
     <link rel="stylesheet" href="styles/dashboard.css">
 </head>
 <body style="display:flex; justify-content:center; align-items:center; height:100vh; background:var(--bg-deep);">
+    <!-- Simple landing page that shows while we check whether the user is signed in -->
     <div style="color:var(--accent); font-family:sans-serif; text-align:center;">
         <h2>LASER NORTH CONSOLE</h2>
         <p>Checking Authentication...</p>
     </div>
 
+    <!-- Firebase libraries provide the sign-in and authentication service -->
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
     <script src="scripts/config.js"></script>
     <script>
+        // Redirect to the Dashboard when signed in, otherwise send the user to Login.
         auth.onAuthStateChanged(user => {
             window.location.href = user ? "pages/dashboard.html" : "pages/login.html";
         });
