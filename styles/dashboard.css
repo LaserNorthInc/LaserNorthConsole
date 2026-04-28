@@ -1,7 +1,7 @@
 :root {
     --bg-deep: #0f0f10;
     --bg-surface: #1a1b1e;
-    --accent: #ff6b00; /* LNI Safety Orange */
+    --accent: #ff6b00;
     --accent-hover: #e66000;
     --text: #e4e6eb;
     --text-muted: #9da3ae;
@@ -14,14 +14,14 @@ body {
     color: var(--text);
     font-family: 'Inter', sans-serif;
     margin: 0;
+    overflow-x: hidden;
 }
 
-/* NAVIGATION: Centered links for all pages */
 .app-nav {
     display: flex;
     align-items: center;
     background: var(--bg-surface);
-    padding: 0 1.5rem;
+    padding: 0 2rem;
     height: 70px;
     border-bottom: 1px solid var(--border);
     position: sticky;
@@ -31,11 +31,11 @@ body {
 
 .nav-brand { color: var(--accent); font-weight: 800; font-size: 1.4rem; flex-shrink: 0; }
 
-.nav-tabs { 
-    display: flex; 
-    gap: 1.5rem; 
-    height: 100%; 
-    margin: 0 auto; /* This centers the links */
+.nav-tabs {
+    display: flex;
+    gap: 2rem;
+    height: 100%;
+    margin: 0 auto;
 }
 
 .tab {
@@ -45,18 +45,52 @@ body {
     color: var(--text-muted);
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     border-bottom: 3px solid transparent;
+    transition: color 0.2s;
 }
+.tab:hover { color: var(--accent); }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 .mobile-menu-btn { display: none; background: none; border: 1px solid var(--border); color: var(--accent); padding: 8px; border-radius: 4px; cursor: pointer; }
 
-/* CONTENT BOXES */
-.content-container { padding: 1.5rem; max-width: 1600px; margin: 0 auto; }
-.inventory-card { background: var(--bg-surface); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.5rem; padding: 15px; }
+/* CONTENT LAYOUT - WIDE FOR DESKTOP */
+.content-container { padding: 1.5rem; max-width: 98%; margin: 0 auto; }
+
+.inventory-card {
+    background: var(--bg-surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+/* TABLE STYLING - UN-CRAMMED */
+table { width: 100%; border-collapse: separate; border-spacing: 0; }
+th {
+    background: #111;
+    padding: 15px 12px;
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--accent);
+    white-space: nowrap;
+}
+td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+    white-space: nowrap; /* Prevents squishing */
+}
+tr:hover td { background-color: rgba(255, 107, 0, 0.03); }
 
 /* MOBILE RESPONSIVENESS */
+@media (max-width: 1024px) {
+    .nav-tabs { gap: 1rem; }
+    td { font-size: 0.85rem; padding: 10px; }
+}
+
 @media (max-width: 768px) {
     .mobile-menu-btn { display: block; }
     .nav-tabs {
@@ -67,16 +101,10 @@ body {
         margin: 0;
     }
     .nav-tabs.open { display: flex; }
-    .tab { padding: 15px; border-bottom: 1px solid var(--border); width: 100%; box-sizing: border-box; }
-    
-    thead { display: none; }
-    tr { display: block; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: var(--radius); }
-    td { display: flex; justify-content: space-between; padding: 0.6rem 1rem; border: none; }
-    td::before { content: attr(data-label); font-weight: bold; color: var(--accent); font-size: 0.8rem; }
-}
+    .tab { padding: 15px; border-bottom: 1px solid var(--border); width: 100%; }
 
-/* BUTTONS */
-.btn-submit { background: var(--accent); color: black; font-weight: 800; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
-.action-btn { padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 2px; }
-.btn-reserve { border: 2px solid var(--accent); background: transparent; color: var(--accent); }
-.btn-use { border: 2px solid #ff4444; background: #ff4444; color: #fff; }
+    thead { display: none; }
+    tr { display: block; margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 5px; }
+    td { display: flex; justify-content: space-between; padding: 0.8rem 1rem; border: none; white-space: normal; }
+    td::before { content: attr(data-label); font-weight: bold; color: var(--accent); font-size: 0.8rem; margin-right: 10px; }
+}

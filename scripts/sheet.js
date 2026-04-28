@@ -19,7 +19,12 @@ function populateDropdowns() {
     for (let id in selects) {
         const el = document.getElementById(id);
         if (!el) continue;
-        selects[id].forEach(opt => {
+        selects[id].innerHTML = (id.startsWith('filter')) ? '<option value="">All</option>' : '';
+        selects[id].id === 'filter-type' ? (selects[id].innerHTML = '') : null;
+        selects[id].id === 'new-thickness' ? (selects[id].innerHTML = '<option value="" disabled selected>Select Thick</option>') : null;
+
+        DATA_OPTIONS[id.includes('type') ? 'materials' : (id.includes('thick') ? 'thicknesses' : 'locations')].forEach(opt => {
+            if (id === 'new-type' && opt === 'All') return;
             let o = document.createElement('option');
             o.value = opt; o.textContent = opt;
             el.appendChild(o);
@@ -30,12 +35,11 @@ function populateDropdowns() {
 async function loadSheetData() {
     const list = document.getElementById('sheet-list');
     const selectedTab = document.getElementById('filter-type').value || "All";
-    list.innerHTML = '<tr><td colspan="10">Loading ' + selectedTab + '...</td></tr>';
     try {
         const res = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${SHEET_CONFIG.IDS.FULL_SHEET}&tab=${selectedTab}`);
         inventoryData = await res.json();
         filterInventory();
-    } catch(e) { list.innerHTML = '<tr><td colspan="10">Error fetching data. Check script URL.</td></tr>'; }
+    } catch(e) { console.error("Data fetch error"); }
 }
 
 function filterInventory() {
@@ -47,8 +51,8 @@ function filterInventory() {
     const filtered = inventoryData.filter(item => {
         return (!fThick || item.thickness === fThick) &&
                (!fLoc || item.location === fLoc) &&
-               (!fCert || item.cert.toLowerCase().includes(fCert)) &&
-               (!fSize || item.size.toLowerCase().includes(fSize));
+               (!fCert || String(item.cert).toLowerCase().includes(fCert)) &&
+               (!fSize || String(item.size).toLowerCase().includes(fSize));
     });
     renderTable(filtered);
 }
@@ -58,7 +62,8 @@ function renderTable(data) {
     let html = '';
     data.forEach(item => {
         if(item.id) {
-            const reserveClass = item.reserve === 'AVAILABLE' ? 'status-available' : 'status-reserved';
+            const isAvailable = item.reserve === 'AVAILABLE';
+            const reserveClass = isAvailable ? 'status-available' : 'status-reserved';
             html += `<tr>
                 <td data-label="ID" style="color:var(--accent); font-weight:700;">${item.id}</td>
                 <td data-label="Type">${item.type}</td>
@@ -69,14 +74,14 @@ function renderTable(data) {
                 <td data-label="Added">${item.dateAdded}</td>
                 <td data-label="Reserve" class="${reserveClass}">${item.reserve}</td>
                 <td data-label="User">${item.user}</td>
-                <td data-label="Actions">
+                <td data-label="Actions" style="text-align:center;">
                     <button onclick="openReserveModal(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn btn-reserve">RESERVE</button>
                     <button onclick="useItem(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn btn-use">USE</button>
                 </td>
             </tr>`;
         }
     });
-    list.innerHTML = html || '<tr><td colspan="10">No matches found.</td></tr>';
+    list.innerHTML = html;
 }
 
 function openReserveModal(row, id, tab) {
@@ -89,12 +94,12 @@ function closeModal() { document.getElementById('reserve-modal').style.display =
 
 async function submitReserve() {
     const job = document.getElementById('modal-job').value;
-    if(!job) return alert("Enter Job #");
+    if(!job) return alert("Job # Required");
     await postToGoogle({ action: 'reserve', rowNumber: window.currentRow, tabName: window.currentTab, jobNum: job });
 }
 
 async function useItem(row, id, tab) {
-    if(!confirm("USE ITEM: Remove " + id + " from " + tab + " inventory?")) return;
+    if(!confirm("REMOVE " + id + " from " + tab + "?")) return;
     await postToGoogle({ action: 'use', rowNumber: row, tabName: tab });
 }
 
@@ -102,6 +107,8 @@ async function submitNewItem() {
     const type = document.getElementById('new-type').value;
     const len = document.getElementById('new-len').value;
     const wid = document.getElementById('new-wid').value;
+    if(!type || !len || !wid) return alert("Fill required fields");
+
     const payload = {
         action: 'add',
         tabName: type,
@@ -124,7 +131,7 @@ async function postToGoogle(payload) {
     try {
         await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
         location.reload();
-    } catch(e) { alert("Network Error: Action failed."); }
+    } catch(e) { alert("Network Error"); }
 }
 
 function toggleForm() {
