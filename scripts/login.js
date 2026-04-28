@@ -1,19 +1,30 @@
-import { auth } from './config.js';
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.x.x/firebase-auth.js";
+// scripts/login.js
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Get the login button
+    const googleBtn = document.getElementById('google-signin-btn');
+    
+    // 2. Set up the Google Auth Provider
+    const provider = new firebase.auth.GoogleAuthProvider();
 
-const loginForm = document.getElementById('loginForm');
-const errorMsg = document.getElementById('errorMessage');
+    // 3. Attach click event
+    googleBtn.addEventListener('click', async () => {
+        try {
+            googleBtn.innerHTML = 'Signing In...'; // Provide UX feedback
+            
+            // Trigger the Google Pop-up
+            const result = await firebase.auth().signInWithPopup(provider);
+            
+            // successful login!
+            const user = result.user;
+            console.log("Logged in:", user.displayName);
+            
+            // Redirect to dashboard (this assumes your auth.js logic is already listening for the login state)
+            window.location.href = 'dashboard.html';
 
-loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-        window.location.href = "dashboard.html";
-    } catch (error) {
-        errorMsg.innerText = "Invalid login credentials.";
-        console.error(error);
-    }
+        } catch (error) {
+            console.error("Login Failed:", error.message);
+            googleBtn.innerHTML = 'Sign in with Google (Failed)';
+            alert('Unable to authenticate. Please check that your domain is authorized in Firebase.');
+        }
+    });
 });

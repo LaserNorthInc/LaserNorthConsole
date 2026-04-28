@@ -1,29 +1,61 @@
-.login-container {
+/* Ensure your structural.css (colors, fonts) is loaded before this! */
+
+body.login-layout {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 90vh; /* Keeps it centered vertically */
+    height: 100vh;
+    background-color: var(--bg); /* Defined in structural.css */
+    margin: 0;
 }
 
-.login-card {
-    background: var(--card-bg);
+#login-container {
+    background: #111; /* Slightly darker than card bg */
     padding: 40px;
-    border-radius: 16px;
+    border-radius: 12px;
     border: 1px solid var(--border);
     width: 100%;
     max-width: 400px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-.login-card h2 {
-    margin-top: 0;
-    color: var(--accent-blue);
+#login-container h1 {
+    font-size: 2rem;
+    color: var(--text);
+    margin-bottom: 10px;
+    font-weight: 300;
 }
 
-.error {
-    color: #ff4d4d;
-    font-size: 0.85rem;
-    margin-top: 15px;
-    min-height: 1.2rem;
+#login-container p {
+    color: #888;
+    margin-bottom: 40px;
+    font-size: 0.9rem;
+}
+
+/* The Google Sign-In Button (Sleek Style) */
+#google-signin-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+    background: #fff;
+    color: #111;
+    border: none;
+    padding: 15px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+#google-signin-btn:hover {
+    background: #e0e0e0;
+}
+
+#google-signin-btn img {
+    height: 24px;
+    width: 24px;
 }
