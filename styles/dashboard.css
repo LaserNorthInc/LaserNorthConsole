@@ -12,11 +12,10 @@
 body {
     background-color: var(--bg-deep);
     color: var(--text);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', sans-serif;
     margin: 0;
 }
 
-/* --- NAVIGATION LOGIC --- */
 .app-nav {
     display: flex;
     align-items: center;
@@ -25,15 +24,13 @@ body {
     padding: 0 1.5rem;
     height: 70px;
     border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    position: sticky; top: 0; z-index: 1000;
 }
 
 .nav-brand { color: var(--accent); font-weight: 800; font-size: 1.4rem; }
+.mobile-menu-btn { display: none; background: none; border: 1px solid var(--border); color: var(--accent); padding: 8px; border-radius: 4px; cursor: pointer; }
 
 .nav-tabs { display: flex; gap: 1rem; height: 100%; }
-
 .tab {
     display: flex; align-items: center; padding: 0 0.5rem;
     color: var(--text-muted); text-decoration: none; font-weight: 600;
@@ -41,34 +38,20 @@ body {
 }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-.mobile-menu-btn { display: none; background: none; border: 1px solid var(--border); color: var(--accent); padding: 8px; border-radius: 4px; cursor: pointer; }
-
-/* MOBILE HEADER FIX: Collapsible menu */
-@media (max-width: 768px) {
-    .mobile-menu-btn { display: block; }
-    .nav-tabs {
-        display: none; /* Hide by default on mobile */
-        position: absolute; top: 70px; left: 0; width: 100%;
-        background: var(--bg-surface); flex-direction: column;
-        height: auto; border-bottom: 1px solid var(--border);
-    }
-    .nav-tabs.open { display: flex; }
-    .tab { padding: 15px; border-bottom: 1px solid var(--border); border-left: 4px solid transparent; }
-    .tab.active { border-left-color: var(--accent); border-bottom-color: var(--border); }
-}
-
-/* --- REUSABLE SHOP FLOOR CARDS --- */
 .content-container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
-.inventory-card { background: var(--bg-surface); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.5rem; }
+.inventory-card { background: var(--bg-surface); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.5rem; padding: 15px; }
 
-/* TABLE TO CARD CONVERSION (MOBILE) */
 table { width: 100%; border-collapse: collapse; }
 th { background: #111; padding: 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); }
 td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
 
 @media (max-width: 768px) {
+    .mobile-menu-btn { display: block; }
+    .nav-tabs { display: none; position: absolute; top: 70px; left: 0; width: 100%; background: var(--bg-surface); flex-direction: column; }
+    .nav-tabs.open { display: flex; }
+    .tab { padding: 15px; border-bottom: 1px solid var(--border); }
     thead { display: none; }
-    tr { display: block; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 5px; }
-    td { display: flex; justify-content: space-between; padding: 0.6rem 1rem; border: none; }
+    tr { display: block; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: var(--radius); }
+    td { display: flex; justify-content: space-between; padding: 0.8rem 1rem; border: none; }
     td::before { content: attr(data-label); font-weight: bold; color: var(--accent); font-size: 0.8rem; }
 }
