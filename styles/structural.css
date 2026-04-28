@@ -1,59 +1,96 @@
-/* Add this to your existing structural.css */
+:root {
+    /* Color Palette */
+    --bg-deep: #0f0f10;      /* Near black background */
+    --bg-surface: #1a1b1e;   /* Card/Nav background */
+    --accent-orange: #ff6b00; /* Safety Orange */
+    --accent-hover: #e66000;
+    --text-main: #e4e6eb;
+    --text-muted: #9da3ae;
+    --border-color: #2d2f34;
+    
+    /* Spacing & Effects */
+    --radius: 8px;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
 
+body {
+    background-color: var(--bg-deep);
+    color: var(--text-main);
+    font-family: 'Inter', -apple-system, sans-serif;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* --- Professional Navigation --- */
 .app-nav {
     display: flex;
     align-items: center;
-    background: #000;
-    padding: 0 20px;
-    height: 60px;
-    border-bottom: 2px solid var(--border);
+    background: var(--bg-surface);
+    padding: 0 2rem;
+    height: 70px;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
 }
 
 .nav-brand {
-    color: var(--primary);
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-right: 40px;
+    color: var(--accent-orange);
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.5px;
+    margin-right: 3rem;
 }
 
 .nav-tabs {
     display: flex;
-    gap: 10px;
+    gap: 1.5rem;
     height: 100%;
 }
 
 .tab {
     display: flex;
     align-items: center;
-    padding: 0 20px;
-    color: #888;
+    padding: 0 0.5rem;
+    color: var(--text-muted);
     text-decoration: none;
-    transition: 0.3s;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
     border-bottom: 3px solid transparent;
 }
 
 .tab:hover {
-    color: var(--text);
+    color: var(--accent-orange);
 }
 
 .tab.active {
-    color: var(--primary);
-    border-bottom: 3px solid var(--primary);
-    background: rgba(0, 230, 118, 0.05);
+    color: var(--accent-orange);
+    border-bottom: 3px solid var(--accent-orange);
 }
 
+/* --- Buttons --- */
 .logout-btn {
     margin-left: auto;
     background: transparent;
-    border: 1px solid #ff5252;
-    color: #ff5252;
-    padding: 5px 15px;
-    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius);
     cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
 }
 
+.logout-btn:hover {
+    background: #ff4444;
+    color: white;
+    border-color: #ff4444;
+}
+
+/* --- Layout Containers --- */
 .content-container {
-    padding: 30px;
-    max-width: 1200px;
+    padding: 2.5rem;
+    max-width: 1300px;
     margin: 0 auto;
 }
+
+h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 2rem; color: white; }

@@ -1,37 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel="stylesheet" href="../styles/structural.css">
-    <link rel="stylesheet" href="../styles/sheet.css">
-</head>
-<body>
-    <nav class="top-nav">
-        <a href="dashboard.html">← Back</a>
-        <h1>Sheet Metal Inventory</h1>
-    </nav>
-
-    <div class="toggle-container">
-        <button id="btnFull" class="active" onclick="setView('full')">Full Sheets</button>
-        <button id="btnCropper" onclick="setView('cropper')">Cropper/Remnants</button>
+<main class="content-container">
+    <h1>Sheet Stock Inventory</h1>
+    
+    <div class="inventory-table-container">
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Material</th>
+                    <th>Gauge</th>
+                    <th>Dimensions</th>
+                    <th>Qty</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="sheet-table-body">
+                <tr>
+                    <td class="col-highlight">Mild Steel</td>
+                    <td>10ga</td>
+                    <td>48" x 96"</td>
+                    <td>24</td>
+                    <td><span class="stock-badge stock-ok">In Stock</span></td>
+                    <td><button class="btn-icon">Edit</button></td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-
-    <main id="form-container">
-        <form id="inventoryForm">
-            <label>Material Type (e.g. Aluminum, SS)</label>
-            <input type="text" id="material" required>
-
-            <label>Thickness (GA or mm)</label>
-            <input type="text" id="thickness" required>
-
-            <div id="dimensions-group">
-                <label>Quantity</label>
-                <input type="number" id="qty" required>
-            </div>
-
-            <button type="submit" id="submitBtn">Log Entry</button>
-        </form>
-    </main>
-
-    <script type="module" src="../scripts/sheet.js"></script>
-</body>
-</html>
+</main>

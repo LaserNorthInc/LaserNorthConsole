@@ -1,92 +1,82 @@
-/* View Toggle Buttons */
-.toggle-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 2rem;
+/* Container for the table to allow horizontal scrolling on small screens */
+.inventory-table-container {
+    width: 100%;
+    overflow-x: auto;
+    background: var(--bg-surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    margin-top: 1rem;
 }
 
-.toggle-container button {
-    flex: 1;
-    padding: 12px;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    color: var(--text-dim);
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.toggle-container button.active {
-    border-color: var(--accent-blue);
-    color: white;
-    background: rgba(52, 152, 219, 0.1);
-    box-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
-}
-
-/* Form Styling */
-#inventoryForm {
-    background: var(--card-bg);
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-}
-
-label {
-    display: block;
-    margin-bottom: 8px;
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
     font-size: 0.9rem;
-    color: var(--text-dim);
+    text-align: left;
 }
 
-input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 20px;
-    background: #2a2a2a;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: white;
-    font-size: 1rem;
-    box-sizing: border-box;
+/* Header Styling */
+.inventory-table thead {
+    background-color: #111; /* Slightly darker than surface */
+    border-bottom: 2px solid var(--border-color);
 }
 
-input:focus {
-    outline: none;
-    border-color: var(--accent-blue);
+.inventory-table th {
+    padding: 1rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.75rem;
 }
 
-/* Specific styling for the dimensions (LxW) */
-.flex-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
+/* Body Styling */
+.inventory-table td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
 }
 
-.flex-row input {
-    margin-bottom: 0;
+.inventory-table tbody tr:hover {
+    background-color: rgba(255, 107, 0, 0.05); /* Subtle orange tint */
 }
 
-/* Action Button */
-#submitBtn {
-    width: 100%;
-    padding: 15px;
-    background: var(--accent-blue);
-    color: white;
-    border: none;
-    border-radius: 8px;
+/* Highlighted Column (e.g., Material or ID) */
+.col-highlight {
+    color: var(--accent-orange);
+    font-weight: 700;
+}
+
+/* Status Badges for Stock Levels */
+.stock-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
     font-weight: bold;
-    font-size: 1.1rem;
+}
+
+.stock-low {
+    background: rgba(255, 68, 68, 0.1);
+    color: #ff4444;
+    border: 1px solid #ff4444;
+}
+
+.stock-ok {
+    background: rgba(0, 230, 118, 0.1);
+    color: #00e676;
+    border: 1px solid #00e676;
+}
+
+/* Action Buttons (Edit/Delete) */
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
     cursor: pointer;
-    margin-top: 10px;
+    padding: 5px;
+    transition: color 0.2s;
 }
 
-#submitBtn:active {
-    transform: scale(0.98);
-}
-
-#submitBtn:disabled {
-    background: #444;
-    cursor: not-allowed;
+.btn-icon:hover {
+    color: var(--accent-orange);
 }

@@ -1,41 +1,48 @@
-// scripts/sheet.js
-document.addEventListener('DOMContentLoaded', () => {
-    initSheetApp();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Verify user is logged in before fetching data
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (user) {
+            await loadSheetInventory();
+        }
+    });
 });
 
-async function initSheetApp() {
-    console.log("Initializing Sheet Inventory...");
-    const data = await fetchSheetData();
-    renderSheetTable(data);
-}
+async function loadSheetInventory() {
+    const tableBody = document.getElementById('sheet-table-body');
+    const url = SHEET_CONFIG.getUrl(SHEET_CONFIG.SHEET_STOCK_ID);
 
-async function fetchSheetData() {
-    // Logic for Sheet-specific data
-    return [
-        { material: "MS", gauge: "10ga", size: "48x96", qty: 25 },
-        { material: "AL", gauge: ".125", size: "60x120", qty: 8 }
-    ];
-}
+    try {
+        const response = await fetch(url);
+        const data = await response.text();
+        
+        // Simple CSV Parser (Split by line, then by comma)
+        const rows = data.split('\n').slice(1); // slice(1) skips the header row
+        
+        tableBody.innerHTML = ''; // Clear "Loading" message
 
-function renderSheetTable(items) {
-    const container = document.getElementById('sheet-output');
-    if (!container) return;
+        rows.forEach(row => {
+            const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Regex to handle commas inside quotes
+            
+            if (cols.length > 1) {
+                const [material, gauge, width, length, qty] = cols.map(c => c.replace(/"/g, ''));
+                
+                const statusClass = parseInt(qty) < 5 ? 'stock-low' : 'stock-ok';
+                const statusText = parseInt(qty) < 5 ? 'Low' : 'OK';
 
-    container.innerHTML = `
-        <table class="inventory-table">
-            <thead>
-                <tr><th>Material</th><th>Gauge</th><th>Size</th><th>Qty</th></tr>
-            </thead>
-            <tbody>
-                ${items.map(i => `
-                    <tr>
-                        <td>${i.material}</td>
-                        <td>${i.gauge}</td>
-                        <td>${i.size}</td>
-                        <td>${i.qty}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="col-highlight">${material}</td>
+                    <td>${gauge}</td>
+                    <td>${width} x ${length}</td>
+                    <td>${qty}</td>
+                    <td><span class="stock-badge ${statusClass}">${statusText}</span></td>
+                    <td><button class="btn-icon">✎</button></td>
+                `;
+                tableBody.appendChild(tr);
+            }
+        });
+    } catch (error) {
+        console.error("Error loading Sheet data:", error);
+        tableBody.innerHTML = '<tr><td colspan="6">Error loading data. Check Sheet permissions.</td></tr>';
+    }
 }

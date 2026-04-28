@@ -18,3 +18,12 @@ async function logoutUser() {
     await auth.signOut();
     window.location.href = "login.html";
 }
+
+const SHEET_CONFIG = {
+    // Replace these with your actual Sheet IDs
+    STRUCTURAL_ID: 'YOUR_STRUCTURAL_SHEET_ID',
+    SHEET_STOCK_ID: 'YOUR_SHEET_STOCK_ID',
+    
+    // Helper to generate the fetch URL (CSV format)
+    getUrl: (id) => `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`
+};
