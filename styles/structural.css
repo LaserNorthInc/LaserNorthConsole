@@ -1,40 +1,59 @@
-:root {
-    --primary: #00e676; /* Accent color */
-    --bg: #0a0a0a;
-    --card: #1a1a1a;
-    --text: #e0e0e0;
-    --border: #333;
-}
+/* Add this to your existing structural.css */
 
-body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: sans-serif;
-    margin: 0;
-}
-
-nav {
+.app-nav {
     display: flex;
-    gap: 20px;
-    padding: 1rem;
+    align-items: center;
     background: #000;
-    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 60px;
+    border-bottom: 2px solid var(--border);
 }
 
-nav a { color: var(--primary); text-decoration: none; font-weight: bold; }
-
-.inventory-card {
-    background: var(--card);
-    padding: 15px;
-    margin: 10px;
-    border-radius: 8px;
-    border-left: 4px solid var(--primary);
+.nav-brand {
+    color: var(--primary);
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-right: 40px;
 }
 
-.inventory-table {
-    width: 100%;
-    border-collapse: collapse;
+.nav-tabs {
+    display: flex;
+    gap: 10px;
+    height: 100%;
 }
 
-.inventory-table th { text-align: left; border-bottom: 2px solid var(--primary); padding: 10px; }
-.inventory-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+.tab {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    color: #888;
+    text-decoration: none;
+    transition: 0.3s;
+    border-bottom: 3px solid transparent;
+}
+
+.tab:hover {
+    color: var(--text);
+}
+
+.tab.active {
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+    background: rgba(0, 230, 118, 0.05);
+}
+
+.logout-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid #ff5252;
+    color: #ff5252;
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.content-container {
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}

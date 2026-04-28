@@ -2,39 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard | Laser North Console</title>
+    <title>Structural Inventory | LNI</title>
     <link rel="stylesheet" href="../styles/structural.css">
-    <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
 <body>
     <nav class="app-nav">
         <div class="nav-brand">LNI Console</div>
         <div class="nav-tabs">
-            <a href="dashboard.html" class="tab active">Dashboard</a>
-            <a href="structural.html" class="tab">Structural</a>
+            <a href="dashboard.html" class="tab">Dashboard</a>
+            <a href="structural.html" class="tab active">Structural</a>
             <a href="sheet.html" class="tab">Sheet Stock</a>
         </div>
         <button class="logout-btn" onclick="logoutUser()">Logout</button>
     </nav>
 
     <main class="content-container">
-        <h1>System Overview</h1>
-        <div class="dashboard-grid">
-            <div class="stat-card">
-                <h3>Structural Status</h3>
-                <p id="structural-summary">Loading summary...</p>
+        <h1>Structural Inventory (Beams/Tubes)</h1>
+        <div id="structural-list" class="inventory-grid">
             </div>
-            <div class="stat-card">
-                <h3>Sheet Status</h3>
-                <p id="sheet-summary">Loading summary...</p>
-            </div>
-        </div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
     <script src="../scripts/config.js"></script>
-    <script src="../scripts/dashboard.js"></script>
+    <script src="../scripts/structural.js"></script> 
 </body>
 </html>

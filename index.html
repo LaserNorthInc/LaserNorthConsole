@@ -2,43 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laser North Console | Loading...</title>
     <link rel="stylesheet" href="styles/structural.css">
-    <style>
-        /* Simple centered loading screen */
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #0a0a0a;
-            color: #00e676;
-            font-family: sans-serif;
-        }
-    </style>
 </head>
 <body>
-
-    <div id="loader">
-        <h2>Initializing Console...</h2>
+    <div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#0a0a0a; color:#00e676;">
+        <h2>Initializing...</h2>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
     <script src="scripts/config.js"></script>
 
     <script>
-        // Check authentication state immediately
         firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                // User is signed in, go to Dashboard
-                window.location.href = "pages/dashboard.html";
-            } else {
-                // No user is signed in, go to Login
-                window.location.href = "pages/login.html";
-            }
+            window.location.href = user ? "pages/dashboard.html" : "pages/login.html";
         });
     </script>
 </body>
