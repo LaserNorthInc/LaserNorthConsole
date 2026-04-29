@@ -3,35 +3,38 @@ body.login-layout {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: #0f0f10;
+    background: radial-gradient(circle at center, #1a1b1e 0%, #0f0f10 100%);
+    margin: 0;
 }
 
 #login-container {
-    background: #1a1b1e;
-    padding: 3rem;
+    background: rgba(26, 27, 30, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 3.5rem;
     border-radius: 16px;
-    border: 1px solid #2d2f34;
+    border: 1px solid rgba(255, 107, 0, 0.2);
     text-align: center;
-    width: 320px;
+    width: 340px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.6);
 }
 
+.login-brand { margin-bottom: 2.5rem; }
+
 #google-signin-btn {
-    margin-top: 2rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 12px;
     width: 100%;
     background: white;
     color: #111;
     border: none;
-    padding: 12px;
+    padding: 0.9rem;
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
+    transition: 0.2s;
 }
 
-#google-signin-btn img {
-    width: 18px;
-    height: 18px;
-    margin-right: 12px;
-}
+#google-signin-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,255,255,0.1); }
+#google-signin-btn img { width: 20px; }

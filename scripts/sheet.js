@@ -1,3 +1,4 @@
+// SECTION: DATA MANAGEMENT
 let cachedInventory = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,37 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// SECTION: CLEAN DATE FORMATTING
 function cleanDate(dateStr) {
     if (!dateStr) return "N/A";
     const d = new Date(dateStr);
     if (isNaN(d)) return dateStr; 
     return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
-}
-
-function initializeInterface() {
-    populateDropdowns();
-}
-
-function populateDropdowns() {
-    const dropdownMapping = {
-        'filter-material': DATA_OPTIONS.materials,
-        'new-type': DATA_OPTIONS.materials.filter(m => m !== 'All'),
-        'filter-thickness': DATA_OPTIONS.thicknesses,
-        'new-thickness': DATA_OPTIONS.thicknesses,
-        'filter-location': DATA_OPTIONS.locations,
-        'new-location': DATA_OPTIONS.locations
-    };
-    for (const [id, options] of Object.entries(dropdownMapping)) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        el.innerHTML = id.startsWith('filter') ? '<option value="All">All</option>' : '';
-        options.forEach(opt => {
-            const o = document.createElement('option');
-            o.value = opt; o.textContent = opt;
-            el.appendChild(o);
-        });
-    }
 }
 
 async function loadInventoryData() {
@@ -50,25 +25,7 @@ async function loadInventoryData() {
         const response = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${spreadsheetId}&tab=${selectedTab}`);
         cachedInventory = await response.json();
         applyFilters();
-    } catch (e) { console.error("Fetch failed", e); }
-}
-
-function applyFilters() {
-    const thickness = document.getElementById('filter-thickness')?.value || "All";
-    const location = document.getElementById('filter-location')?.value || "All";
-    const status = document.getElementById('filter-status')?.value || "";
-    const certSearch = document.getElementById('filter-cert')?.value?.toLowerCase() || "";
-    const sizeSearch = document.getElementById('filter-size')?.value?.toLowerCase() || "";
-
-    const filtered = cachedInventory.filter(item => {
-        const matchStatus = !status || (status === "AVAILABLE" ? item.reserve === 'AVAILABLE' : item.reserve !== 'AVAILABLE');
-        const matchThick = thickness === "All" || item.thickness === thickness;
-        const matchLoc = location === "All" || item.location === location;
-        const matchCert = !certSearch || String(item.cert || "").toLowerCase().includes(certSearch);
-        const matchSize = !sizeSearch || String(item.size || "").toLowerCase().includes(sizeSearch);
-        return matchStatus && matchThick && matchLoc && matchCert && matchSize;
-    });
-    renderInventoryTable(filtered);
+    } catch (e) { console.error("Fetch error", e); }
 }
 
 function renderInventoryTable(data) {
@@ -88,45 +45,48 @@ function renderInventoryTable(data) {
             <td data-label="Status" class="${item.reserve === 'AVAILABLE' ? 'status-ready' : 'status-held'}">${item.reserve}</td>
             <td data-label="User">${item.user}</td>
             <td class="action-cell">
-                <button onclick="openReserveModal(${item.rowNumber}, '${item.id}', '${item.tabName}', ${item.qty || 1})" class="btn-action btn-reserve">RESERVE</button>
-                <button onclick="removeResource(${item.rowNumber}, '${item.id}', '${item.tabName}', ${item.qty || 1})" class="btn-action btn-remove">USE</button>
+                <button onclick="openTransactionModal('reserve', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${item.qty || 1})" class="btn-action btn-reserve">RESERVE</button>
+                <button onclick="openTransactionModal('use', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${item.qty || 1})" class="btn-action btn-remove">USE</button>
             </td>
         </tr>
     `).join('');
 }
 
-async function removeResource(row, id, tab, currentQty) {
+// SECTION: MODAL LOGIC
+function openTransactionModal(action, row, id, tab, maxQty) {
     const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
-    if (isFullSheet && currentQty > 1) {
-        const used = prompt(`Inventory: ${currentQty} pieces. How many are you using?`, "1");
-        if (!used || isNaN(used)) return;
-        await postTransaction({ action: 'updateQty', rowNumber: row, tabName: tab, usedQty: parseInt(used) });
-    } else {
-        if (!confirm(`Confirm removal of ${id}?`)) return;
-        await postTransaction({ action: 'use', rowNumber: row, tabName: tab });
-    }
+    const modal = document.getElementById('transaction-modal');
+    window.currentTx = { action, row, id, tab, maxQty };
+
+    document.getElementById('modal-title').innerText = action === 'reserve' ? 'Reserve Metal' : 'Log Usage';
+    document.getElementById('modal-part-id').innerText = `${tab} | ${id}`;
+    
+    document.getElementById('modal-job-group').style.display = action === 'reserve' ? 'block' : 'none';
+    document.getElementById('modal-qty-group').style.display = isFullSheet ? 'block' : 'none';
+    
+    if (isFullSheet) document.getElementById('modal-qty-input').max = maxQty;
+    modal.style.display = 'flex';
 }
 
-async function submitNewItem() {
-    const type = document.getElementById('new-type')?.value;
+function closeTransactionModal() { document.getElementById('transaction-modal').style.display = 'none'; }
+
+async function submitTransaction() {
+    const { action, row, tab, maxQty } = window.currentTx;
     const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
-    
-    const payload = {
-        action: 'add',
-        tabName: type,
-        id: 'LN-' + Math.random().toString(36).substr(2, 4).toUpperCase(),
-        type: type,
-        thickness: document.getElementById('new-thickness')?.value,
-        size: `${document.getElementById('new-len')?.value} x ${document.getElementById('new-wid')?.value}`,
-        location: document.getElementById('new-location')?.value,
-        cert: !isFullSheet ? document.getElementById('new-cert-add')?.value : 'N/A',
-        qty: isFullSheet ? document.getElementById('new-qty')?.value : 1,
-        notes: document.getElementById('new-notes')?.value || '',
-        user: auth.currentUser?.email || 'System',
-        dateAdded: new Date().toLocaleDateString('en-US'),
-        reservedFor: 'AVAILABLE'
-    };
-    await postTransaction(payload);
+    const qtyVal = parseInt(document.getElementById('modal-qty-input').value);
+    const jobVal = document.getElementById('modal-job-input').value;
+
+    if (action === 'reserve') {
+        if (!jobVal) return alert("Job # is required.");
+        let status = jobVal + (isFullSheet ? ` (Res: ${qtyVal})` : "");
+        await postTransaction({ action: 'reserve', rowNumber: row, tabName: tab, jobNum: status });
+    } else {
+        if (isFullSheet) {
+            await postTransaction({ action: 'updateQty', rowNumber: row, tabName: tab, usedQty: qtyVal });
+        } else {
+            await postTransaction({ action: 'use', rowNumber: row, tabName: tab });
+        }
+    }
 }
 
 async function postTransaction(payload) {
@@ -137,30 +97,4 @@ async function postTransaction(payload) {
     } catch(e) { location.reload(); }
 }
 
-function openReserveModal(row, id, tab, currentQty) {
-    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
-    const jobNum = prompt(`Enter Job Number for ${id}:`);
-    if (!jobNum) return;
-
-    let finalStatus = jobNum;
-    if (isFullSheet) {
-        const resQty = prompt(`In Stock: ${currentQty}. How many sheets for this job?`, "1");
-        if (resQty) finalStatus += ` (Qty: ${resQty})`;
-    }
-
-    postTransaction({ action: 'reserve', rowNumber: row, tabName: tab, jobNum: finalStatus });
-}
-
-function resetFilters() {
-    const filterIds = ['filter-material', 'filter-thickness', 'filter-location', 'filter-status', 'filter-cert', 'filter-size'];
-    filterIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = el.tagName === 'SELECT' ? "All" : "";
-    });
-    loadInventoryData();
-}
-
-function toggleForm() {
-    const form = document.getElementById('add-item-form');
-    if (form) form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
-}
+function toggleMobileMenu() { document.querySelector('.nav-tabs').classList.toggle('active'); }
