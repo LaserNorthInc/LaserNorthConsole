@@ -1,6 +1,6 @@
 /**
  * LNI CONSOLE - MATERIAL MANAGEMENT LOGIC
- * Version: 4.0 (Direct Available/Total Stock Management)
+ * Version: 5.0 (Updated Sheet Layout: [ID, Mat, Thick, Size, Loc, Avail, Total, User, Date, Notes])
  */
 
 let cachedInventory = [];
@@ -61,15 +61,13 @@ async function loadInventoryData() {
 function applyFilters() {
     const thickness = document.getElementById('filter-thickness')?.value || "All";
     const location = document.getElementById('filter-location')?.value || "All";
-    const certSearch = document.getElementById('filter-cert')?.value?.toLowerCase() || "";
     const sizeSearch = document.getElementById('filter-size')?.value?.toLowerCase() || "";
 
     const filtered = cachedInventory.filter(item => {
         const matchThick = thickness === "All" || item.thickness === thickness;
         const matchLoc = location === "All" || item.location === location;
-        const matchCert = !certSearch || String(item.cert || "").toLowerCase().includes(certSearch);
         const matchSize = !sizeSearch || String(item.size || "").toLowerCase().includes(sizeSearch);
-        return matchThick && matchLoc && matchCert && matchSize;
+        return matchThick && matchLoc && matchSize;
     });
 
     renderInventoryTable(filtered);
@@ -86,12 +84,9 @@ function renderInventoryTable(data) {
     const tableBody = document.getElementById('inventory-table-body');
     if (!tableBody) return;
 
-    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
-
     tableBody.innerHTML = data.map(item => {
-        // availableStock and totalStock are now provided directly by the updated doGet
-        const avail = isFullSheet ? (parseInt(item.availableStock) || 0) : 1;
-        const total = isFullSheet ? (parseInt(item.totalStock) || 0) : 1;
+        const avail = parseInt(item.availableStock) || 0;
+        const total = parseInt(item.totalStock) || 0;
         
         return `
         <tr>
@@ -100,19 +95,13 @@ function renderInventoryTable(data) {
             <td data-label="Thickness">${item.thickness}</td>
             <td data-label="Size">${item.size}</td>
             <td data-label="Location">${item.location}</td>
-            ${isFullSheet ? `
-                <td data-label="Available Stock" style="color:var(--success); font-weight:800;">${avail}</td>
-                <td data-label="Total Stock">${total}</td>
-            ` : `
-                <td data-label="Cert #">${item.cert || 'N/A'}</td>
-                <td data-label="Qty">1</td>
-            `}
+            <td data-label="Available" class="qty-avail" style="color:var(--success); font-weight:800;">${avail}</td>
+            <td data-label="Total Stock" class="qty-total">${total}</td>
             <td data-label="User">${item.user || 'System'}</td>
             <td data-label="Date Added">${cleanDate(item.dateAdded)}</td>
             <td data-label="Notes">${item.notes || ''}</td>
             <td class="action-cell">
-                <button onclick="openTransactionModal('reserve', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${avail})" class="btn-action btn-reserve">RESERVE</button>
-                <button onclick="openTransactionModal('use', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${total})" class="btn-action btn-remove">USE</button>
+                <button onclick="openTransactionModal('use', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${avail})" class="btn-action btn-remove">USE</button>
             </td>
         </tr>`;
     }).join('');
@@ -120,14 +109,11 @@ function renderInventoryTable(data) {
 
 function openTransactionModal(action, row, id, tab, maxQty) {
     const modal = document.getElementById('transaction-modal');
-    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
-    
     window.currentTx = { action, row, id, tab, maxQty };
 
-    document.getElementById('modal-title').innerText = (action === 'reserve' ? 'Reserve Quantity' : 'Log Usage');
+    document.getElementById('modal-title').innerText = 'Log Material Usage';
     document.getElementById('modal-part-id').innerText = `${tab} | ${id}`;
     
-    // For direct stock management, we only need the Qty field in the modal
     document.getElementById('modal-job-group').style.display = 'none'; 
     document.getElementById('modal-qty-group').style.display = 'block';
     
@@ -144,27 +130,20 @@ function closeTransactionModal() {
 
 async function submitTransaction() {
     const { action, row, tab, maxQty } = window.currentTx;
-    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
-    
     const qtyVal = parseInt(document.getElementById('modal-qty-input').value);
 
     if (qtyVal > maxQty) {
-        alert(`ERROR: Cannot process ${qtyVal} units. Only ${maxQty} allowed for this action.`);
+        alert(`ERROR: Cannot process ${qtyVal} units. Only ${maxQty} available.`);
         return;
     }
 
-    if (action === 'reserve') {
-        // Subtracts from Available Stock (Column 6)
-        await postTransaction({ action: 'reserve', rowNumber: row, tabName: tab, reserveQty: qtyVal });
-    } else {
-        if (isFullSheet) {
-            // Subtracts from both Available (6) and Total (7)
-            await postTransaction({ action: 'updateQty', rowNumber: row, tabName: tab, usedQty: qtyVal });
-        } else {
-            if (!confirm("Confirm full removal of this remnant?")) return;
-            await postTransaction({ action: 'use', rowNumber: row, tabName: tab });
-        }
-    }
+    // Default usage logic: subtracts from both Available and Total
+    await postTransaction({ 
+        action: 'updateQty', 
+        rowNumber: row, 
+        tabName: tab, 
+        usedQty: qtyVal 
+    });
 }
 
 async function postTransaction(payload) {
@@ -179,7 +158,6 @@ async function postTransaction(payload) {
 
 async function submitNewItem() {
     const type = document.getElementById('new-type')?.value;
-    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
     const qty = parseInt(document.getElementById('new-qty')?.value) || 1;
 
     const payload = {
@@ -190,7 +168,7 @@ async function submitNewItem() {
         thickness: document.getElementById('new-thickness')?.value,
         size: `${document.getElementById('new-len')?.value} x ${document.getElementById('new-wid')?.value}`,
         location: document.getElementById('new-location')?.value,
-        qty: qty, // This will be sent as both Avail and Total in the Apps Script
+        qty: qty, // Sent as starting value for both Available and Total
         user: auth.currentUser?.email || 'System',
         dateAdded: new Date().toLocaleDateString('en-US'),
         notes: document.getElementById('new-notes')?.value || ''
@@ -199,17 +177,13 @@ async function submitNewItem() {
     await postTransaction(payload);
 }
 
-function toggleMobileMenu() {
-    document.querySelector('.nav-tabs').classList.toggle('active');
-}
-
 function toggleForm() {
     const form = document.getElementById('add-item-form');
     if (form) form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
 }
 
 function resetFilters() {
-    const ids = ['filter-material', 'filter-thickness', 'filter-location', 'filter-cert', 'filter-size'];
+    const ids = ['filter-material', 'filter-thickness', 'filter-location', 'filter-size'];
     ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = el.tagName === 'SELECT' ? "All" : "";
