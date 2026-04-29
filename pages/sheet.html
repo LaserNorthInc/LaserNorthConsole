@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cropper Remnants | LNI Console</title>
+    <title>Croppers | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
 <body>
@@ -13,10 +13,10 @@
             <a href="dashboard.html" class="tab">Dashboard</a>
             <a href="structural.html" class="tab">Structural</a>
             <div class="dropdown">
-                <button class="tab active dropdown-btn">Inventory Management ▾</button>
+                <button class="tab active dropdown-btn">Sheets ▾</button>
                 <div class="dropdown-content">
-                    <a href="sheet.html">Cropper Remnants</a>
-                    <a href="full-sheets.html">Full Sheet Stock</a>
+                    <a href="full-sheets.html">Full Sheet</a>
+                    <a href="sheet.html">Croppers</a>
                 </div>
             </div>
         </div>
@@ -25,23 +25,23 @@
 
     <main class="content-container">
         <div class="header-action-row">
-            <h1>Cropper Remnants</h1>
+            <h1>Cropper Inventory</h1>
             <button class="btn-primary" onclick="toggleForm()">+ Add Remnant</button>
         </div>
 
         <section class="inventory-card filter-container">
-            <div><label>Material Group</label><select id="filter-material" onchange="loadInventoryData()"></select></div>
+            <div><label>Material</label><select id="filter-material" onchange="loadInventoryData()"></select></div>
             <div><label>Thickness</label><select id="filter-thickness" onchange="applyFilters()"></select></div>
             <div><label>Location</label><select id="filter-location" onchange="applyFilters()"></select></div>
             <div><label>Status</label>
                 <select id="filter-status" onchange="applyFilters()">
-                    <option value="">All Items</option>
+                    <option value="">All Statuses</option>
                     <option value="AVAILABLE">Available</option>
                     <option value="RESERVED">Reserved</option>
                 </select>
             </div>
-            <div><label>Dimensions</label><input type="text" id="filter-size" onkeyup="applyFilters()" placeholder="Search size..."></div>
-            <div><label>Heat/Cert #</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Search Heat..."></div>
+            <div><label>Size</label><input type="text" id="filter-size" onkeyup="applyFilters()" placeholder="Search size..."></div>
+            <div><label>Cert #</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Heat #"></div>
             <div class="filter-actions">
                 <button onclick="resetFilters()" class="btn-secondary">RESET</button>
             </div>
@@ -51,8 +51,8 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Part ID</th><th>Material</th><th>Thick</th><th>Size</th><th>Location</th>
-                        <th>Heat/Cert #</th><th>Date Logged</th><th>Status</th><th>Logged By</th><th>Actions</th>
+                        <th>ID</th><th>Material</th><th>Thick</th><th>Size</th><th>Loc</th>
+                        <th>Heat #</th><th>Date</th><th>Status</th><th>User</th><th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="inventory-table-body"></tbody>
@@ -66,9 +66,6 @@
     <script src="../scripts/config.js"></script>
     <script src="../scripts/constants.js"></script>
     <script src="../scripts/sheet.js"></script>
-    <script>
-        // Use the Cropper Remnants spreadsheet ID
-        window.CURRENT_RESOURCE_ID = SHEET_CONFIG.IDS.CROPPER_SHEET; 
-    </script>
+    <script>window.CURRENT_RESOURCE_ID = SHEET_CONFIG.IDS.CROPPER_SHEET;</script>
 </body>
 </html>

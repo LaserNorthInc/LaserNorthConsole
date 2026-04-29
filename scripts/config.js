@@ -1,3 +1,4 @@
+// SECTION: SHARED APP CONFIG
 const firebaseConfig = {
     apiKey: "AIzaSyBhwDfRQLphl_0Lk8pQDZQ3jO8pr795aqU",
     authDomain: "lasernorthconsole-32295.firebaseapp.com",
@@ -13,10 +14,10 @@ const db = (typeof firebase.firestore === 'function') ? firebase.firestore() : n
 
 const SHEET_CONFIG = {
     IDS: {
-        CROPPER_SHEET:'1kG_fjYX4Vc0D8qId4yaHEgJZl5xJ-9Y1MaIo549a_l8',
-        FULL_SHEET: '1kG_fjYX4Vc0D8qId4yaHEgJZl5xJ-9Y1MaIo549a_l8',
-        BEAMS: 'YOUR_ID',
-        TUBING: 'YOUR_ID'
+        CROPPER_SHEET: '1kG_fjYX4Vc0D8qId4yaHEgJZl5xJ-9Y1MaIo549a_l8', 
+        FULL_SHEET: '1cticFH1te1nCnLpHPxX9awf-52a_1ESMOLT3d9tU-oo',
+        BEAMS: 'YOUR_BEAMS_ID',
+        TUBING: 'YOUR_TUBING_ID'
     },
     SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxsEIqi6_gjzCMTJCvb56uqebBoWF1DgLBmUZi_qvLVm4CUfarR_xybWM_voLANgsWupw/exec',
     getReadUrl: (id, gid=0) => `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`
