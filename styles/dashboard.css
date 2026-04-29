@@ -13,7 +13,7 @@ body {
     color: var(--text);
     font-family: 'Inter', sans-serif;
     margin: 0;
-    padding-top: 70px; /* Space for fixed nav */
+    padding-top: 70px;
 }
 
 .app-nav {
@@ -23,24 +23,14 @@ body {
     padding: 0 2rem;
     height: 70px;
     border-bottom: 1px solid var(--border);
-    position: fixed; /* Fixed header */
-    top: 0;
-    left: 0;
-    right: 0;
+    position: fixed;
+    top: 0; left: 0; right: 0;
     z-index: 1000;
 }
 
 .nav-brand { color: var(--accent); font-weight: 800; font-size: 1.4rem; }
-
 .nav-tabs { display: flex; gap: 2rem; margin: 0 auto; }
-
-.tab {
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 600;
-    padding: 24px 0;
-    border-bottom: 3px solid transparent;
-}
+.tab { color: var(--text-muted); text-decoration: none; font-weight: 600; padding: 24px 0; border-bottom: 3px solid transparent; }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 .logout-btn {

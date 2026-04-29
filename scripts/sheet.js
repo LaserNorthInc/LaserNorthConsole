@@ -1,8 +1,11 @@
+// SECTION: SHEET PAGE LOGIC
 let inventoryData = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     populateDropdowns();
-    auth.onAuthStateChanged(user => { if (user) loadSheetData(); });
+    if (typeof auth !== 'undefined') {
+        auth.onAuthStateChanged(user => { if (user) loadSheetData(); });
+    }
 });
 
 function populateDropdowns() {
@@ -18,7 +21,6 @@ function populateDropdowns() {
         const el = document.getElementById(id);
         if (!el) continue;
         el.innerHTML = (id.startsWith('filter')) ? '<option value="All">All</option>' : '';
-        
         selects[id].forEach(opt => {
             let o = document.createElement('option');
             o.value = opt; o.textContent = opt;
@@ -28,35 +30,28 @@ function populateDropdowns() {
 }
 
 async function loadSheetData() {
-    const selectedTab = document.getElementById('filter-type').value || "All";
+    const filterEl = document.getElementById('filter-type');
+    const selectedTab = filterEl ? filterEl.value : "All";
+    if (typeof SHEET_CONFIG === 'undefined') return;
+
     try {
         const res = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${SHEET_CONFIG.IDS.FULL_SHEET}&tab=${selectedTab}`);
         inventoryData = await res.json();
         filterInventory();
-    } catch(e) { console.error("Data fetch error", e); }
-}
-
-function clearFilters() {
-    document.getElementById('filter-type').value = "All";
-    document.getElementById('filter-thick').value = "All";
-    document.getElementById('filter-loc').value = "All";
-    document.getElementById('filter-status').value = "";
-    document.getElementById('filter-cert').value = "";
-    loadSheetData();
+    } catch(e) { console.error("Fetch failed", e); }
 }
 
 function filterInventory() {
-    const fThick = document.getElementById('filter-thick').value;
-    const fLoc = document.getElementById('filter-loc').value;
-    const fStatus = document.getElementById('filter-status').value;
-    const fSearch = document.getElementById('filter-cert').value.toLowerCase();
+    const fThick = document.getElementById('filter-thick')?.value || "All";
+    const fLoc = document.getElementById('filter-loc')?.value || "All";
+    const fStatus = document.getElementById('filter-status')?.value || "";
+    const fSearch = document.getElementById('filter-cert')?.value?.toLowerCase() || "";
 
     const filtered = inventoryData.filter(item => {
         const matchesStatus = !fStatus || (fStatus === "AVAILABLE" ? item.reserve === 'AVAILABLE' : item.reserve !== 'AVAILABLE');
         const matchesThick = fThick === "All" || item.thickness === fThick;
         const matchesLoc = fLoc === "All" || item.location === fLoc;
         const matchesSearch = !fSearch || JSON.stringify(item).toLowerCase().includes(fSearch);
-
         return matchesStatus && matchesThick && matchesLoc && matchesSearch;
     });
     renderTable(filtered);
@@ -64,35 +59,40 @@ function filterInventory() {
 
 function renderTable(data) {
     const list = document.getElementById('sheet-list');
+    if (!list) return;
     list.innerHTML = data.map(item => `
         <tr>
             <td style="color:var(--accent); font-weight:700;">${item.id}</td>
-            <td>${item.type}</td>
-            <td>${item.thickness}</td>
-            <td>${item.size}</td>
-            <td>${item.location}</td>
-            <td>${item.cert}</td>
-            <td>${item.dateAdded}</td>
+            <td>${item.type}</td><td>${item.thickness}</td><td>${item.size}</td><td>${item.location}</td>
+            <td>${item.cert}</td><td>${item.dateAdded}</td>
             <td class="${item.reserve === 'AVAILABLE' ? 'status-available' : 'status-reserved'}">${item.reserve}</td>
             <td>${item.user}</td>
             <td style="text-align:center;">
                 <button onclick="openReserveModal(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn btn-reserve">RESERVE</button>
-                <button onclick="useItem(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn btn-use">USE</button>
             </td>
         </tr>
     `).join('');
 }
 
-// ... existing openReserveModal, closeModal, submitReserve, useItem, submitNewItem functions ...
+function clearFilters() {
+    const ids = ['filter-type', 'filter-thick', 'filter-loc', 'filter-status', 'filter-cert'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = (id.includes('type') || id.includes('thick') || id.includes('loc')) ? "All" : "";
+    });
+    loadSheetData();
+}
+
+function toggleForm() {
+    const f = document.getElementById('add-item-form');
+    if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
 async function postToGoogle(payload) {
+    if (typeof SHEET_CONFIG === 'undefined') return;
     payload.sheetId = SHEET_CONFIG.IDS.FULL_SHEET;
     try {
         await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         location.reload();
     } catch(e) { alert("Network Error"); }
-}
-
-function toggleForm() {
-    const f = document.getElementById('add-item-form');
-    f.style.display = f.style.display === 'none' ? 'block' : 'none';
 }
