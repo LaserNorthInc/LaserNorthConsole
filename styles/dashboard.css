@@ -2,7 +2,6 @@
     --bg-deep: #0f0f10;
     --bg-surface: #1a1b1e;
     --accent: #ff6b00;
-    --accent-hover: #e66000;
     --text: #e4e6eb;
     --text-muted: #9da3ae;
     --border: #2d2f34;
@@ -14,7 +13,7 @@ body {
     color: var(--text);
     font-family: 'Inter', sans-serif;
     margin: 0;
-    overflow-x: hidden;
+    padding-top: 70px; /* Space for fixed nav */
 }
 
 .app-nav {
@@ -24,87 +23,40 @@ body {
     padding: 0 2rem;
     height: 70px;
     border-bottom: 1px solid var(--border);
-    position: sticky;
+    position: fixed; /* Fixed header */
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 1000;
 }
 
-.nav-brand { color: var(--accent); font-weight: 800; font-size: 1.4rem; flex-shrink: 0; }
+.nav-brand { color: var(--accent); font-weight: 800; font-size: 1.4rem; }
 
-.nav-tabs {
-    display: flex;
-    gap: 2rem;
-    height: 100%;
-    margin: 0 auto;
-}
+.nav-tabs { display: flex; gap: 2rem; margin: 0 auto; }
 
 .tab {
-    display: flex;
-    align-items: center;
-    padding: 0 0.5rem;
     color: var(--text-muted);
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.95rem;
+    padding: 24px 0;
     border-bottom: 3px solid transparent;
-    transition: color 0.2s;
 }
-.tab:hover { color: var(--accent); }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-.mobile-menu-btn { display: none; background: none; border: 1px solid var(--border); color: var(--accent); padding: 8px; border-radius: 4px; cursor: pointer; }
-
-/* CONTENT LAYOUT - WIDE FOR DESKTOP */
-.content-container { padding: 1.5rem; max-width: 98%; margin: 0 auto; }
-
-.inventory-card {
-    background: var(--bg-surface);
-    border-radius: var(--radius);
+.logout-btn {
+    background: transparent;
     border: 1px solid var(--border);
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-}
-
-/* TABLE STYLING - UN-CRAMMED */
-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-th {
-    background: #111;
-    padding: 15px 12px;
-    text-align: left;
-    font-size: 0.75rem;
-    text-transform: uppercase;
     color: var(--text-muted);
-    border-bottom: 2px solid var(--accent);
-    white-space: nowrap;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
 }
-td {
-    padding: 14px 12px;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.9rem;
-    white-space: nowrap; /* Prevents squishing */
-}
-tr:hover td { background-color: rgba(255, 107, 0, 0.03); }
+.logout-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-/* MOBILE RESPONSIVENESS */
-@media (max-width: 1024px) {
-    .nav-tabs { gap: 1rem; }
-    td { font-size: 0.85rem; padding: 10px; }
-}
+.content-container { padding: 1.5rem; max-width: 98%; margin: 0 auto; }
+.inventory-card { background: var(--bg-surface); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.5rem; }
 
-@media (max-width: 768px) {
-    .mobile-menu-btn { display: block; }
-    .nav-tabs {
-        display: none;
-        position: absolute; top: 70px; left: 0; width: 100%;
-        background: var(--bg-surface); flex-direction: column;
-        height: auto; border-bottom: 1px solid var(--border);
-        margin: 0;
-    }
-    .nav-tabs.open { display: flex; }
-    .tab { padding: 15px; border-bottom: 1px solid var(--border); width: 100%; }
-
-    thead { display: none; }
-    tr { display: block; margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 5px; }
-    td { display: flex; justify-content: space-between; padding: 0.8rem 1rem; border: none; white-space: normal; }
-    td::before { content: attr(data-label); font-weight: bold; color: var(--accent); font-size: 0.8rem; margin-right: 10px; }
-}
+table { width: 100%; border-collapse: collapse; }
+th { background: #111; padding: 15px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); border-bottom: 2px solid var(--accent); }
+td { padding: 14px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }

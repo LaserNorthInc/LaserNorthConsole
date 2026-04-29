@@ -10,7 +10,6 @@
         .status-reserved { color: var(--accent); font-weight: bold; }
         input, select { background:#0a0a0b; color:white; border:1px solid var(--border); padding:10px; border-radius:4px; width:100%; box-sizing:border-box; }
         label { font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: bold; }
-        
         .btn-submit { background:var(--accent); color:black; font-weight:800; border:none; padding:12px 24px; border-radius:4px; cursor:pointer; text-transform:uppercase; }
         .action-btn { padding: 6px 12px; border-radius: 4px; font-size: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin: 0 2px; }
         .btn-reserve { border: 1px solid var(--accent); background: transparent; color: var(--accent); }
@@ -20,12 +19,12 @@
 <body>
     <nav class="app-nav">
         <div class="nav-brand">LNI CONSOLE</div>
-        <button class="mobile-menu-btn" onclick="toggleMenu()">☰ MENU</button>
         <div class="nav-tabs" id="nav-links">
             <a href="dashboard.html" class="tab">Dashboard</a>
             <a href="structural.html" class="tab">Structural</a>
             <a href="sheet.html" class="tab active">Sheet</a>
         </div>
+        <button class="logout-btn" onclick="logoutUser()">Logout</button>
     </nav>
 
     <main class="content-container">
@@ -34,16 +33,23 @@
             <button class="btn-submit" onclick="toggleForm()">+ Add Remnant</button>
         </div>
 
-        <!-- FILTERS -->
-        <section class="inventory-card" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:15px; padding:20px;">
+        <section class="inventory-card" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:15px; padding:20px;">
             <div><label>Material Tab</label><select id="filter-type" onchange="loadSheetData()"></select></div>
             <div><label>Thickness</label><select id="filter-thick" onchange="filterInventory()"></select></div>
-            <div><label>Size / Dim</label><input type="text" id="filter-size" onkeyup="filterInventory()" placeholder="Search dimensions..."></div>
             <div><label>Location</label><select id="filter-loc" onchange="filterInventory()"></select></div>
-            <div><label>Cert #</label><input type="text" id="filter-cert" onkeyup="filterInventory()" placeholder="Search heat #..."></div>
+            <div><label>Status</label>
+                <select id="filter-status" onchange="filterInventory()">
+                    <option value="">All Statuses</option>
+                    <option value="AVAILABLE">Available Only</option>
+                    <option value="RESERVED">Reserved Only</option>
+                </select>
+            </div>
+            <div><label>Cert # / Size</label><input type="text" id="filter-cert" onkeyup="filterInventory()" placeholder="Search..."></div>
+            <div style="display:flex; align-items:flex-end;">
+                <button onclick="clearFilters()" style="width:100%; padding:10px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">CLEAR</button>
+            </div>
         </section>
 
-        <!-- ADD FORM -->
         <section id="add-item-form" class="inventory-card" style="display:none; border-left:4px solid var(--accent); padding:20px;">
             <h3 style="margin:0 0 20px 0; color:var(--accent);">Upload New Sheet Remnant</h3>
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:15px;">
@@ -58,33 +64,21 @@
             </div>
         </section>
 
-        <!-- TABLE WRAPPER -->
         <div class="inventory-card" style="padding:0;">
             <div style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Material</th>
-                            <th>Thick</th>
-                            <th>Size (LxW)</th>
-                            <th>Location</th>
-                            <th>Cert #</th>
-                            <th>Date Added</th>
-                            <th>Status</th>
-                            <th>User</th>
-                            <th style="text-align:center;">Actions</th>
+                            <th>ID</th><th>Material</th><th>Thick</th><th>Size</th><th>Location</th>
+                            <th>Cert #</th><th>Date Added</th><th>Status</th><th>User</th><th style="text-align:center;">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="sheet-list">
-                        <!-- Data injected via sheet.js -->
-                    </tbody>
+                    <tbody id="sheet-list"></tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- MODAL -->
     <div id="reserve-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center;">
         <div class="inventory-card" style="width:340px; text-align:center; padding:30px;">
             <h3 style="margin:0 0 10px 0;">Reserve Item</h3>
