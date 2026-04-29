@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cropper Remnants | LNI Console</title>
+    <title>Full Sheet Stock | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
 <body>
@@ -25,33 +25,22 @@
 
     <main class="content-container">
         <div class="header-action-row">
-            <h1>Cropper Remnants</h1>
-            <button class="btn-primary" onclick="toggleForm()">+ Add Remnant</button>
+            <h1>Full Sheet Stock</h1>
+            <button class="btn-primary" onclick="toggleForm()">+ Add New Stock</button>
         </div>
 
         <section class="inventory-card filter-container">
             <div><label>Material Group</label><select id="filter-material" onchange="loadInventoryData()"></select></div>
             <div><label>Thickness</label><select id="filter-thickness" onchange="applyFilters()"></select></div>
-            <div><label>Location</label><select id="filter-location" onchange="applyFilters()"></select></div>
-            <div><label>Status</label>
-                <select id="filter-status" onchange="applyFilters()">
-                    <option value="">All Items</option>
-                    <option value="AVAILABLE">Available</option>
-                    <option value="RESERVED">Reserved</option>
-                </select>
-            </div>
-            <div><label>Dimensions</label><input type="text" id="filter-size" onkeyup="applyFilters()" placeholder="Search size..."></div>
             <div><label>Heat/Cert #</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Search Heat..."></div>
-            <div class="filter-actions">
-                <button onclick="resetFilters()" class="btn-secondary">RESET</button>
-            </div>
+            <div class="filter-actions"><button onclick="resetFilters()" class="btn-secondary">RESET</button></div>
         </section>
 
         <div class="inventory-card table-wrapper">
             <table>
                 <thead>
                     <tr>
-                        <th>Part ID</th><th>Material</th><th>Thick</th><th>Size</th><th>Location</th>
+                        <th>ID</th><th>Material</th><th>Thick</th><th>Size</th><th>Location</th>
                         <th>Heat/Cert #</th><th>Date Logged</th><th>Status</th><th>Logged By</th><th>Actions</th>
                     </tr>
                 </thead>
@@ -67,8 +56,8 @@
     <script src="../scripts/constants.js"></script>
     <script src="../scripts/sheet.js"></script>
     <script>
-        // Use the Cropper Remnants spreadsheet ID
-        window.CURRENT_RESOURCE_ID = SHEET_CONFIG.IDS.CROPPER_SHEET; 
+        // Use the Full Sheet Stock spreadsheet ID
+        window.CURRENT_RESOURCE_ID = SHEET_CONFIG.IDS.FULL_SHEET; 
     </script>
 </body>
 </html>
