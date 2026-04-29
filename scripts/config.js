@@ -13,6 +13,7 @@ const db = (typeof firebase.firestore === 'function') ? firebase.firestore() : n
 
 const SHEET_CONFIG = {
     IDS: {
+        CROPPER_SHEET:'1kG_fjYX4Vc0D8qId4yaHEgJZl5xJ-9Y1MaIo549a_l8',
         FULL_SHEET: '1kG_fjYX4Vc0D8qId4yaHEgJZl5xJ-9Y1MaIo549a_l8',
         BEAMS: 'YOUR_ID',
         TUBING: 'YOUR_ID'
