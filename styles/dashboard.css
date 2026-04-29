@@ -1,22 +1,30 @@
+/**
+ * LNI CONSOLE - MASTER STYLESHEET
+ * Version: 2.1 (Industrial left-aligned header + Mobile Card View)
+ */
+
 :root {
     --bg-deep: #0f0f10;
     --bg-surface: #1a1b1e;
     --accent: #ff6b00;
+    --accent-hover: #e66000;
     --text: #e4e6eb;
     --text-muted: #9da3ae;
     --border: #2d2f34;
     --radius: 8px;
+    --success: #00e676;
+    --danger: #ff4444;
 }
 
 body {
     background-color: var(--bg-deep);
     color: var(--text);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
-    padding-top: 80px;
+    padding-top: 85px; /* Space for fixed header */
 }
 
-/* SECTION: NAVIGATION (Left Aligned) */
+/* SECTION: NAVIGATION (LEFT-ALIGNED) */
 .app-nav {
     display: flex;
     justify-content: space-between;
@@ -37,74 +45,315 @@ body {
     height: 100%;
 }
 
-.nav-tabs { 
-    display: flex; 
-    gap: 1rem; 
-    height: 70px; 
-    margin: 0; /* Removed margin: 0 auto to left align */
+.nav-brand {
+    color: var(--accent);
+    font-weight: 900;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
-.tab, .dropdown-btn { 
-    display: flex; align-items: center; color: var(--text-muted); 
-    text-decoration: none; font-weight: 700; font-size: 0.85rem;
-    text-transform: uppercase; border-bottom: 3px solid transparent;
-    transition: 0.2s; height: 100%; padding: 0 12px; background: none; 
-    cursor: pointer; border-top:none; border-left:none; border-right:none;
+.nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+    height: 100%;
 }
 
-.tab:hover, .tab.active, .dropdown:hover .dropdown-btn { color: var(--accent); }
-.tab.active, .dropdown-btn.active { border-bottom-color: var(--accent); }
+.tab, .dropdown-btn {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    border-bottom: 3px solid transparent;
+    transition: 0.2s;
+    height: 100%;
+    padding: 0 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
 
-/* Dropdown */
-.dropdown { position: relative; display: flex; align-items: center; height: 100%; }
+.tab:hover, .tab.active, .dropdown:hover .dropdown-btn {
+    color: var(--accent);
+}
+
+.tab.active, .dropdown-btn.active {
+    border-bottom-color: var(--accent);
+}
+
+/* Dropdown Menu */
+.dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
 .dropdown-content {
-    display: none; position: absolute; top: 70px; left: 0; background-color: var(--bg-surface);
-    min-width: 180px; border: 1px solid var(--border); border-radius: 0 0 8px 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+    display: none;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    background-color: var(--bg-surface);
+    min-width: 200px;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    overflow: hidden;
 }
-.dropdown-content a { color: var(--text); padding: 14px 20px; text-decoration: none; display: block; font-size: 0.85rem; }
-.dropdown-content a:hover { background: var(--bg-deep); color: var(--accent); }
-.dropdown:hover .dropdown-content { display: block; }
 
-/* Logout Button */
-.logout-btn { 
-    background: transparent; border: 1px solid var(--border); 
-    color: var(--text-muted); padding: 8px 16px; border-radius: 4px; 
-    cursor: pointer; font-weight: 700; font-size: 0.75rem;
+.dropdown-content a {
+    color: var(--text);
+    padding: 14px 20px;
+    text-decoration: none;
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
 }
-.logout-btn:hover { border-color: #ff4444; color: #ff4444; }
 
-/* Menu Toggle (Mobile) */
-.menu-toggle { display: none; background: none; border: none; color: var(--accent); font-size: 1.5rem; cursor: pointer; }
+.dropdown-content a:hover {
+    background: var(--bg-deep);
+    color: var(--accent);
+}
 
-/* SECTION: MODAL STYLING */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Header Action Buttons (Logout & Mobile Toggle) */
+.logout-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.75rem;
+    transition: 0.2s;
+}
+
+.logout-btn:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: rgba(255, 68, 68, 0.05);
+}
+
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding-left: 15px;
+}
+
+/* SECTION: MAIN CONTENT & CARDS */
+.content-container {
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.header-action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+h1 { margin: 0; font-weight: 800; letter-spacing: -0.5px; }
+
+.inventory-card {
+    background: var(--bg-surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+/* SECTION: FILTERS */
+.filter-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    padding: 20px;
+    align-items: end;
+}
+
+.filter-container label {
+    display: block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+input, select {
+    background: #0a0a0b;
+    border: 1px solid var(--border);
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    font-weight: 600;
+}
+
+/* SECTION: DATA TABLES */
+table { width: 100%; border-collapse: collapse; }
+th {
+    background: #111;
+    padding: 15px;
+    text-align: left;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+
+.id-cell { color: var(--accent); font-weight: 800; font-family: monospace; }
+.status-ready { color: var(--success); font-weight: bold; }
+.status-held { color: var(--accent); font-weight: bold; }
+
+/* SECTION: BUTTONS */
+.btn-primary {
+    background: var(--accent);
+    color: black;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 800;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.btn-secondary {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.btn-action {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    cursor: pointer;
+    margin: 0 2px;
+    border: none;
+    text-transform: uppercase;
+}
+
+.btn-reserve { border: 1px solid var(--accent) !important; background: transparent !important; color: var(--accent) !important; }
+.btn-remove { background: var(--danger) !important; color: white !important; }
+
+/* SECTION: TRANSACTION MODALS */
 .modal-overlay {
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85); z-index: 3000; justify-content: center; align-items: center;
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 3000;
+    justify-content: center;
+    align-items: center;
     backdrop-filter: blur(4px);
 }
+
 .modal-card {
-    background: var(--bg-surface); width: 90%; max-width: 400px;
-    border-radius: 12px; border: 1px solid var(--border); padding: 2rem;
+    background: var(--bg-surface);
+    width: 90%;
+    max-width: 400px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 2rem;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
-.modal-footer { display: flex; gap: 10px; margin-top: 1.5rem; }
 
 /* SECTION: MOBILE ADAPTIVITY */
 @media (max-width: 768px) {
     .menu-toggle { display: block; }
-    .nav-tabs {
-        display: none; position: absolute; top: 70px; left: 0; right: 0;
-        background: var(--bg-surface); flex-direction: column; height: auto;
-        border-bottom: 2px solid var(--border);
-    }
-    .nav-tabs.active { display: flex; }
-    .tab, .dropdown-btn { width: 100%; padding: 15px 2rem; border: none; height: auto; }
-    .dropdown-content { position: static; box-shadow: none; width: 100%; border: none; background: var(--bg-deep); }
     
-    /* Table to Card view remains the same as previous fix */
+    .nav-tabs {
+        display: none;
+        position: absolute;
+        top: 70px; left: 0; right: 0;
+        background: var(--bg-surface);
+        flex-direction: column;
+        border-bottom: 2px solid var(--border);
+        height: auto;
+    }
+    
+    .nav-tabs.active { display: flex; }
+    
+    .tab, .dropdown-btn {
+        width: 100%;
+        padding: 18px 2rem;
+        border: none;
+        height: auto;
+        justify-content: flex-start;
+    }
+
+    .dropdown-content {
+        position: static;
+        box-shadow: none;
+        width: 100%;
+        border: none;
+        background: var(--bg-deep);
+    }
+
+    /* CARD VIEW FOR TABLE */
     table, thead, tbody, th, td, tr { display: block; }
     thead tr { position: absolute; top: -9999px; left: -9999px; }
-    tr { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; padding: 12px; }
-    td { border: none; display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.9rem; text-align: right; }
-    td::before { content: attr(data-label); font-weight: 800; color: var(--accent); text-transform: uppercase; font-size: 0.7rem; text-align: left; }
+    
+    tr {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 12px;
+    }
+    
+    td {
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 0.9rem;
+        text-align: right;
+    }
+    
+    td::before {
+        content: attr(data-label);
+        font-weight: 800;
+        color: var(--accent);
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        text-align: left;
+    }
+
+    .action-cell {
+        justify-content: center;
+        border-top: 1px solid var(--border);
+        margin-top: 12px;
+        padding-top: 15px;
+    }
 }
