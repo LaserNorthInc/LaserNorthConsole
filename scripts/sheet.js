@@ -1,6 +1,6 @@
 /**
  * LNI CONSOLE - MATERIAL MANAGEMENT LOGIC
- * Version: 3.1 (Fixed Cropper Buttons + Inventory Validation)
+ * Version: 4.0 (Direct Available/Total Stock Management)
  */
 
 let cachedInventory = [];
@@ -61,17 +61,15 @@ async function loadInventoryData() {
 function applyFilters() {
     const thickness = document.getElementById('filter-thickness')?.value || "All";
     const location = document.getElementById('filter-location')?.value || "All";
-    const status = document.getElementById('filter-status')?.value || "";
     const certSearch = document.getElementById('filter-cert')?.value?.toLowerCase() || "";
     const sizeSearch = document.getElementById('filter-size')?.value?.toLowerCase() || "";
 
     const filtered = cachedInventory.filter(item => {
-        const matchStatus = !status || (status === "AVAILABLE" ? item.reserve === 'AVAILABLE' : item.reserve !== 'AVAILABLE');
         const matchThick = thickness === "All" || item.thickness === thickness;
         const matchLoc = location === "All" || item.location === location;
         const matchCert = !certSearch || String(item.cert || "").toLowerCase().includes(certSearch);
         const matchSize = !sizeSearch || String(item.size || "").toLowerCase().includes(sizeSearch);
-        return matchStatus && matchThick && matchLoc && matchCert && matchSize;
+        return matchThick && matchLoc && matchCert && matchSize;
     });
 
     renderInventoryTable(filtered);
@@ -91,23 +89,30 @@ function renderInventoryTable(data) {
     const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
 
     tableBody.innerHTML = data.map(item => {
-        // Ensure Croppers have a virtual QTY of 1 so the modal logic works
-        const itemQty = isFullSheet ? (parseInt(item.qty) || 0) : 1;
+        // availableStock and totalStock are now provided directly by the updated doGet
+        const avail = isFullSheet ? (parseInt(item.availableStock) || 0) : 1;
+        const total = isFullSheet ? (parseInt(item.totalStock) || 0) : 1;
         
         return `
         <tr>
             <td class="id-cell" data-label="ID">${item.id}</td>
             <td data-label="Material">${item.type}</td>
-            <td data-label="Thick">${item.thickness}</td>
+            <td data-label="Thickness">${item.thickness}</td>
             <td data-label="Size">${item.size}</td>
-            <td data-label="Loc">${item.location}</td>
-            <td data-label="${isFullSheet ? 'QTY' : 'Cert #'}">${isFullSheet ? itemQty : (item.cert || 'N/A')}</td>
-            <td data-label="Date Added">${cleanDate(item.dateAdded)}</td>
-            <td data-label="Status" class="${item.reserve === 'AVAILABLE' ? 'status-ready' : 'status-held'}">${item.reserve}</td>
+            <td data-label="Location">${item.location}</td>
+            ${isFullSheet ? `
+                <td data-label="Available Stock" style="color:var(--success); font-weight:800;">${avail}</td>
+                <td data-label="Total Stock">${total}</td>
+            ` : `
+                <td data-label="Cert #">${item.cert || 'N/A'}</td>
+                <td data-label="Qty">1</td>
+            `}
             <td data-label="User">${item.user || 'System'}</td>
+            <td data-label="Date Added">${cleanDate(item.dateAdded)}</td>
+            <td data-label="Notes">${item.notes || ''}</td>
             <td class="action-cell">
-                <button onclick="openTransactionModal('reserve', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${itemQty})" class="btn-action btn-reserve">RESERVE</button>
-                <button onclick="openTransactionModal('use', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${itemQty})" class="btn-action btn-remove">USE</button>
+                <button onclick="openTransactionModal('reserve', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${avail})" class="btn-action btn-reserve">RESERVE</button>
+                <button onclick="openTransactionModal('use', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${total})" class="btn-action btn-remove">USE</button>
             </td>
         </tr>`;
     }).join('');
@@ -119,11 +124,12 @@ function openTransactionModal(action, row, id, tab, maxQty) {
     
     window.currentTx = { action, row, id, tab, maxQty };
 
-    document.getElementById('modal-title').innerText = (action === 'reserve' ? 'Reserve Resource' : 'Log Usage');
+    document.getElementById('modal-title').innerText = (action === 'reserve' ? 'Reserve Quantity' : 'Log Usage');
     document.getElementById('modal-part-id').innerText = `${tab} | ${id}`;
     
-    document.getElementById('modal-job-group').style.display = (action === 'reserve' ? 'block' : 'none');
-    document.getElementById('modal-qty-group').style.display = (isFullSheet ? 'block' : 'none');
+    // For direct stock management, we only need the Qty field in the modal
+    document.getElementById('modal-job-group').style.display = 'none'; 
+    document.getElementById('modal-qty-group').style.display = 'block';
     
     const qtyInput = document.getElementById('modal-qty-input');
     qtyInput.value = 1;
@@ -141,20 +147,18 @@ async function submitTransaction() {
     const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
     
     const qtyVal = parseInt(document.getElementById('modal-qty-input').value);
-    const jobVal = document.getElementById('modal-job-input').value;
 
-    // ERROR HANDLING: INVENTORY VALIDATION
-    if (isFullSheet && qtyVal > maxQty) {
-        alert(`ERROR: Cannot process ${qtyVal} sheets. Only ${maxQty} remain in this stack.`);
+    if (qtyVal > maxQty) {
+        alert(`ERROR: Cannot process ${qtyVal} units. Only ${maxQty} allowed for this action.`);
         return;
     }
 
     if (action === 'reserve') {
-        if (!jobVal) return alert("Job Number is required.");
-        let statusText = jobVal + (isFullSheet ? ` (Qty: ${qtyVal})` : "");
-        await postTransaction({ action: 'reserve', rowNumber: row, tabName: tab, jobNum: statusText });
+        // Subtracts from Available Stock (Column 6)
+        await postTransaction({ action: 'reserve', rowNumber: row, tabName: tab, reserveQty: qtyVal });
     } else {
         if (isFullSheet) {
+            // Subtracts from both Available (6) and Total (7)
             await postTransaction({ action: 'updateQty', rowNumber: row, tabName: tab, usedQty: qtyVal });
         } else {
             if (!confirm("Confirm full removal of this remnant?")) return;
@@ -173,6 +177,28 @@ async function postTransaction(payload) {
     }
 }
 
+async function submitNewItem() {
+    const type = document.getElementById('new-type')?.value;
+    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
+    const qty = parseInt(document.getElementById('new-qty')?.value) || 1;
+
+    const payload = {
+        action: 'add',
+        tabName: type,
+        id: 'LN-' + Math.random().toString(36).substr(2, 4).toUpperCase(),
+        type: type,
+        thickness: document.getElementById('new-thickness')?.value,
+        size: `${document.getElementById('new-len')?.value} x ${document.getElementById('new-wid')?.value}`,
+        location: document.getElementById('new-location')?.value,
+        qty: qty, // This will be sent as both Avail and Total in the Apps Script
+        user: auth.currentUser?.email || 'System',
+        dateAdded: new Date().toLocaleDateString('en-US'),
+        notes: document.getElementById('new-notes')?.value || ''
+    };
+
+    await postTransaction(payload);
+}
+
 function toggleMobileMenu() {
     document.querySelector('.nav-tabs').classList.toggle('active');
 }
@@ -183,7 +209,7 @@ function toggleForm() {
 }
 
 function resetFilters() {
-    const ids = ['filter-material', 'filter-thickness', 'filter-location', 'filter-status', 'filter-cert', 'filter-size'];
+    const ids = ['filter-material', 'filter-thickness', 'filter-location', 'filter-cert', 'filter-size'];
     ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = el.tagName === 'SELECT' ? "All" : "";
