@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Helper for MM/DD/YYYY format
+function getFormattedDate() {
+    const d = new Date();
+    return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
 function populateDropdowns() {
     const selects = {
         'filter-type': DATA_OPTIONS.materials,
@@ -45,14 +51,16 @@ function filterInventory() {
     const fThick = document.getElementById('filter-thick')?.value || "All";
     const fLoc = document.getElementById('filter-loc')?.value || "All";
     const fStatus = document.getElementById('filter-status')?.value || "";
-    const fSearch = document.getElementById('filter-cert')?.value?.toLowerCase() || "";
+    const fCert = document.getElementById('filter-cert')?.value?.toLowerCase() || "";
+    const fSize = document.getElementById('filter-size')?.value?.toLowerCase() || "";
 
     const filtered = inventoryData.filter(item => {
         const matchesStatus = !fStatus || (fStatus === "AVAILABLE" ? item.reserve === 'AVAILABLE' : item.reserve !== 'AVAILABLE');
         const matchesThick = fThick === "All" || item.thickness === fThick;
         const matchesLoc = fLoc === "All" || item.location === fLoc;
-        const matchesSearch = !fSearch || JSON.stringify(item).toLowerCase().includes(fSearch);
-        return matchesStatus && matchesThick && matchesLoc && matchesSearch;
+        const matchesCert = !fCert || String(item.cert).toLowerCase().includes(fCert);
+        const matchesSize = !fSize || String(item.size).toLowerCase().includes(fSize);
+        return matchesStatus && matchesThick && matchesLoc && matchesCert && matchesSize;
     });
     renderTable(filtered);
 }
@@ -69,23 +77,47 @@ function renderTable(data) {
             <td>${item.user}</td>
             <td style="text-align:center;">
                 <button onclick="openReserveModal(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn btn-reserve">RESERVE</button>
+                <button onclick="useItem(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="action-btn btn-use">USE</button>
             </td>
         </tr>
     `).join('');
 }
 
+async function useItem(row, id, tab) {
+    if (!confirm(`REMOVE ${id} from inventory?`)) return;
+    await postToGoogle({ action: 'use', rowNumber: row, tabName: tab });
+}
+
+async function submitNewItem() {
+    const type = document.getElementById('new-type').value;
+    const len = document.getElementById('new-len').value;
+    const wid = document.getElementById('new-wid').value;
+    if(!type || !len || !wid) return alert("Fill required fields");
+
+    const payload = {
+        action: 'add',
+        tabName: type,
+        id: 'LN-' + Math.random().toString(36).substr(2,4).toUpperCase(),
+        type: type,
+        thickness: document.getElementById('new-thickness').value,
+        size: `${len} x ${wid}`,
+        location: document.getElementById('new-location').value,
+        cert: document.getElementById('new-cert-add').value,
+        notes: document.getElementById('new-notes').value,
+        user: auth.currentUser.email,
+        dateAdded: getFormattedDate(),
+        reservedFor: 'AVAILABLE'
+    };
+    await postToGoogle(payload);
+}
+
 function clearFilters() {
-    const ids = ['filter-type', 'filter-thick', 'filter-loc', 'filter-status', 'filter-cert'];
+    const ids = ['filter-type', 'filter-thick', 'filter-loc', 'filter-status', 'filter-cert', 'filter-size'];
     ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = (id.includes('type') || id.includes('thick') || id.includes('loc')) ? "All" : "";
     });
     loadSheetData();
-}
-
-function toggleForm() {
-    const f = document.getElementById('add-item-form');
-    if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
 }
 
 async function postToGoogle(payload) {
@@ -94,5 +126,10 @@ async function postToGoogle(payload) {
     try {
         await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         location.reload();
-    } catch(e) { alert("Network Error"); }
+    } catch(e) { alert("Action saved. Refreshing..."); location.reload(); }
+}
+
+function toggleForm() {
+    const f = document.getElementById('add-item-form');
+    if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
 }

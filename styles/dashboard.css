@@ -40,13 +40,24 @@ body {
     padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
-    font-weight: 600;
 }
-.logout-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-.content-container { padding: 1.5rem; max-width: 98%; margin: 0 auto; }
+/* SECTION: MOBILE OPTIMIZATION */
+@media (max-width: 768px) {
+    .filter-container {
+        grid-template-columns: 1fr 1fr !important;
+        max-height: 250px;
+        overflow-y: auto;
+        padding: 10px !important;
+        gap: 10px !important;
+    }
+    
+    .nav-tabs { display: none; } /* Simplified for shop floor mobile use */
+    
+    td, th { padding: 8px; font-size: 0.75rem; }
+}
+
 .inventory-card { background: var(--bg-surface); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.5rem; }
-
 table { width: 100%; border-collapse: collapse; }
-th { background: #111; padding: 15px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); border-bottom: 2px solid var(--accent); }
-td { padding: 14px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+th { background: #111; padding: 15px; text-align: left; font-size: 0.75rem; color: var(--text-muted); border-bottom: 2px solid var(--accent); }
+td { padding: 14px; border-bottom: 1px solid var(--border); font-size: 0.9rem; white-space: nowrap; }

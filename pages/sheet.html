@@ -33,18 +33,19 @@
             <button class="btn-submit" onclick="toggleForm()">+ Add Remnant</button>
         </div>
 
-        <section class="inventory-card" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:15px; padding:20px;">
-            <div><label>Material Tab</label><select id="filter-type" onchange="loadSheetData()"></select></div>
+        <section class="inventory-card filter-container" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:15px; padding:20px;">
+            <div><label>Material</label><select id="filter-type" onchange="loadSheetData()"></select></div>
             <div><label>Thickness</label><select id="filter-thick" onchange="filterInventory()"></select></div>
             <div><label>Location</label><select id="filter-loc" onchange="filterInventory()"></select></div>
             <div><label>Status</label>
                 <select id="filter-status" onchange="filterInventory()">
-                    <option value="">All Statuses</option>
-                    <option value="AVAILABLE">Available Only</option>
-                    <option value="RESERVED">Reserved Only</option>
+                    <option value="">All</option>
+                    <option value="AVAILABLE">Available</option>
+                    <option value="RESERVED">Reserved</option>
                 </select>
             </div>
-            <div><label>Cert # / Size</label><input type="text" id="filter-cert" onkeyup="filterInventory()" placeholder="Search..."></div>
+            <div><label>Size</label><input type="text" id="filter-size" onkeyup="filterInventory()" placeholder="e.g. 24x48"></div>
+            <div><label>Cert #</label><input type="text" id="filter-cert" onkeyup="filterInventory()" placeholder="Heat #"></div>
             <div style="display:flex; align-items:flex-end;">
                 <button onclick="clearFilters()" style="width:100%; padding:10px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">CLEAR</button>
             </div>
@@ -58,7 +59,7 @@
                 <div><label>Length (in)</label><input type="number" id="new-len" step="0.01"></div>
                 <div><label>Width (in)</label><input type="number" id="new-wid" step="0.01"></div>
                 <div><label>Location</label><select id="new-location"></select></div>
-                <div><label>Cert #</label><input type="text" id="new-cert"></div>
+                <div><label>Cert #</label><input type="text" id="new-cert-add"></div>
                 <div><label>Notes</label><input type="text" id="new-notes"></div>
                 <div style="display:flex; align-items:flex-end;"><button class="btn-submit" style="width:100%" onclick="submitNewItem()">Upload</button></div>
             </div>
@@ -70,7 +71,7 @@
                     <thead>
                         <tr>
                             <th>ID</th><th>Material</th><th>Thick</th><th>Size</th><th>Location</th>
-                            <th>Cert #</th><th>Date Added</th><th>Status</th><th>User</th><th style="text-align:center;">Actions</th>
+                            <th>Cert #</th><th>Date</th><th>Status</th><th>User</th><th style="text-align:center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="sheet-list"></tbody>

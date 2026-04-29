@@ -1,4 +1,3 @@
-// SECTION: SHARED APP CONFIG
 const firebaseConfig = {
     apiKey: "AIzaSyBhwDfRQLphl_0Lk8pQDZQ3jO8pr795aqU",
     authDomain: "lasernorthconsole-32295.firebaseapp.com",
@@ -10,14 +9,13 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-// Only initialize Firestore if the script was loaded in the HTML
 const db = (typeof firebase.firestore === 'function') ? firebase.firestore() : null;
 
 const SHEET_CONFIG = {
     IDS: {
         FULL_SHEET: '1kG_fjYX4Vc0D8qId4yaHEgJZl5xJ-9Y1MaIo549a_l8',
-        BEAMS: '1pZ...', // Update with real ID
-        TUBING: '1pZ...' // Update with real ID
+        BEAMS: 'YOUR_ID',
+        TUBING: 'YOUR_ID'
     },
     SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxsEIqi6_gjzCMTJCvb56uqebBoWF1DgLBmUZi_qvLVm4CUfarR_xybWM_voLANgsWupw/exec',
     getReadUrl: (id, gid=0) => `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`
