@@ -3,9 +3,7 @@ let cachedInventory = [];
 document.addEventListener('DOMContentLoaded', () => {
     initializeInterface();
     if (typeof auth !== 'undefined') {
-        auth.onAuthStateChanged(user => { 
-            if (user) loadInventoryData(); 
-        });
+        auth.onAuthStateChanged(user => { if (user) loadInventoryData(); });
     }
 });
 
@@ -22,34 +20,29 @@ function populateDropdowns() {
         'filter-location': DATA_OPTIONS.locations,
         'new-location': DATA_OPTIONS.locations
     };
-
     for (const [id, options] of Object.entries(dropdownMapping)) {
-        const selectElement = document.getElementById(id);
-        if (!selectElement) continue;
-        selectElement.innerHTML = id.startsWith('filter') ? '<option value="All">All</option>' : '';
+        const el = document.getElementById(id);
+        if (!el) continue;
+        el.innerHTML = id.startsWith('filter') ? '<option value="All">All</option>' : '';
         options.forEach(opt => {
-            const option = document.createElement('option');
-            option.value = opt;
-            option.textContent = opt;
-            selectElement.appendChild(option);
+            const o = document.createElement('option');
+            o.value = opt; o.textContent = opt;
+            el.appendChild(o);
         });
     }
 }
 
 async function loadInventoryData() {
+    const spreadsheetId = window.CURRENT_RESOURCE_ID;
     const materialSelect = document.getElementById('filter-material');
     const selectedTab = materialSelect ? materialSelect.value : "All";
-    const spreadsheetId = window.CURRENT_RESOURCE_ID;
-
     if (!spreadsheetId || typeof SHEET_CONFIG === 'undefined') return;
 
     try {
         const response = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${spreadsheetId}&tab=${selectedTab}`);
         cachedInventory = await response.json();
         applyFilters();
-    } catch (error) {
-        console.error("Fetch failed", error);
-    }
+    } catch (e) { console.error("Fetch failed", e); }
 }
 
 function applyFilters() {
@@ -59,7 +52,7 @@ function applyFilters() {
     const certSearch = document.getElementById('filter-cert')?.value?.toLowerCase() || "";
     const sizeSearch = document.getElementById('filter-size')?.value?.toLowerCase() || "";
 
-    const filteredResults = cachedInventory.filter(item => {
+    const filtered = cachedInventory.filter(item => {
         const matchStatus = !status || (status === "AVAILABLE" ? item.reserve === 'AVAILABLE' : item.reserve !== 'AVAILABLE');
         const matchThick = thickness === "All" || item.thickness === thickness;
         const matchLoc = location === "All" || item.location === location;
@@ -67,7 +60,7 @@ function applyFilters() {
         const matchSize = !sizeSearch || String(item.size).toLowerCase().includes(sizeSearch);
         return matchStatus && matchThick && matchLoc && matchCert && matchSize;
     });
-    renderInventoryTable(filteredResults);
+    renderInventoryTable(filtered);
 }
 
 function renderInventoryTable(data) {
@@ -76,12 +69,8 @@ function renderInventoryTable(data) {
     tableBody.innerHTML = data.map(item => `
         <tr>
             <td class="id-cell">${item.id}</td>
-            <td>${item.type}</td>
-            <td>${item.thickness}</td>
-            <td>${item.size}</td>
-            <td>${item.location}</td>
-            <td>${item.cert}</td>
-            <td>${item.dateAdded}</td>
+            <td>${item.type}</td><td>${item.thickness}</td><td>${item.size}</td><td>${item.location}</td>
+            <td>${item.cert}</td><td>${item.dateAdded}</td>
             <td class="${item.reserve === 'AVAILABLE' ? 'status-ready' : 'status-held'}">${item.reserve}</td>
             <td>${item.user}</td>
             <td class="action-cell">
@@ -95,6 +84,33 @@ function renderInventoryTable(data) {
 async function removeResource(row, id, tab) {
     if (!confirm(`Confirm removal of ${id}?`)) return;
     await postTransaction({ action: 'use', rowNumber: row, tabName: tab });
+}
+
+async function submitNewItem() {
+    const type = document.getElementById('new-type')?.value;
+    const thickness = document.getElementById('new-thickness')?.value;
+    const len = document.getElementById('new-len')?.value;
+    const wid = document.getElementById('new-wid')?.value;
+    const loc = document.getElementById('new-location')?.value;
+    const cert = document.getElementById('new-cert-add')?.value || 'N/A';
+
+    if (!type || !len || !wid) return alert("Required fields missing.");
+
+    const payload = {
+        action: 'add',
+        tabName: type,
+        id: 'LN-' + Math.random().toString(36).substr(2, 4).toUpperCase(),
+        type: type,
+        thickness: thickness,
+        size: `${len} x ${wid}`,
+        location: loc,
+        cert: cert,
+        notes: document.getElementById('new-notes')?.value || '',
+        user: auth.currentUser?.email || 'System',
+        dateAdded: new Date().toLocaleDateString('en-US'),
+        reservedFor: 'AVAILABLE'
+    };
+    await postTransaction(payload);
 }
 
 async function postTransaction(payload) {
@@ -121,7 +137,5 @@ function toggleForm() {
 
 function openReserveModal(row, id, tab) {
     const jobNum = prompt(`Enter Job Number for ${id}:`);
-    if (jobNum) {
-        postTransaction({ action: 'reserve', rowNumber: row, tabName: tab, jobNum: jobNum });
-    }
+    if (jobNum) postTransaction({ action: 'reserve', rowNumber: row, tabName: tab, jobNum: jobNum });
 }
