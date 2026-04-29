@@ -3,26 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | LNI</title>
-    <!-- Dashboard styles for navigation and overview cards -->
+    <title>Dashboard | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
 <body>
-    <!-- Top navigation bar with page links and logout button -->
     <nav class="app-nav">
         <div class="nav-brand">LNI CONSOLE</div>
         <div class="nav-tabs">
             <a href="dashboard.html" class="tab active">Dashboard</a>
             <a href="structural.html" class="tab">Structural</a>
-            <a href="sheet.html" class="tab">Sheet</a>
+            <div class="dropdown">
+                <button class="tab dropdown-btn">Sheets ▾</button>
+                <div class="dropdown-content">
+                    <a href="full-sheets.html">Full Sheet</a>
+                    <a href="sheet.html">Croppers</a>
+                </div>
+            </div>
         </div>
         <button class="logout-btn" onclick="logoutUser()">Logout</button>
     </nav>
 
     <main class="content-container">
         <h1>Overview</h1>
-        <!-- Summary cards for the current inventory counts -->
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom: 30px;">
             <div class="inventory-card" style="padding:20px; border-top: 4px solid var(--accent);">
                 <h3 style="margin-top:0; color:var(--text-muted);">STRUCTURAL STOCK</h3>
                 <p id="struct-count" style="font-size:2rem; font-weight:800; color:var(--accent);">...</p>
@@ -32,11 +35,21 @@
                 <p id="sheet-count" style="font-size:2rem; font-weight:800; color:var(--accent);">...</p>
             </div>
         </div>
+
+        <div class="inventory-card" style="text-align: center; padding: 20px;">
+            <button class="btn-secondary" onclick="toggleGame()" style="width: auto; padding: 10px 40px;">🎮 OPEN BREAKROOM</button>
+            <div id="game-area" style="display: none; margin-top: 20px;">
+                <canvas id="gameCanvas" width="400" height="400" style="border: 2px solid var(--accent); background: #000; border-radius: 8px;"></canvas>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 10px;">Use Left/Right arrows to move the bin.</p>
+            </div>
+        </div>
     </main>
 
-    <!-- Firebase authentication scripts and shared configuration -->
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
     <script src="../scripts/config.js"></script>
+    <script src="../scripts/dashboard.js"></script>
+    <script src="../scripts/game.js"></script>
 </body>
 </html>
