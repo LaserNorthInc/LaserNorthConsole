@@ -37,7 +37,7 @@
                 <div><label>Length (in)</label><input type="number" id="new-len" step="0.01"></div>
                 <div><label>Width (in)</label><input type="number" id="new-wid" step="0.01"></div>
                 <div><label>Loc</label><select id="new-location"></select></div>
-                <div><label>Heat #</label><input type="text" id="new-cert-add"></div>
+                <div><label>Cert #</label><input type="text" id="new-cert-add"></div>
                 <div><label>Notes</label><input type="text" id="new-notes"></div>
                 <div style="display:flex; align-items:flex-end;"><button class="btn-primary" style="width:100%" onclick="submitNewItem()">Submit</button></div>
             </div>
@@ -47,16 +47,24 @@
             <div><label>Material</label><select id="filter-material" onchange="loadInventoryData()"></select></div>
             <div><label>Thickness</label><select id="filter-thickness" onchange="applyFilters()"></select></div>
             <div><label>Location</label><select id="filter-location" onchange="applyFilters()"></select></div>
-            <div><label>Status</label><select id="filter-status" onchange="applyFilters()"><option value="">All Statuses</option><option value="AVAILABLE">Available</option><option value="RESERVED">Reserved</option></select></div>
+            <div><label>Status</label>
+                <select id="filter-status" onchange="applyFilters()">
+                    <option value="">All Statuses</option>
+                    <option value="AVAILABLE">Available</option>
+                    <option value="RESERVED">Reserved</option>
+                </select>
+            </div>
             <div><label>Size</label><input type="text" id="filter-size" onkeyup="applyFilters()" placeholder="Size..."></div>
-            <div><label>Cert #</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Heat #"></div>
-            <div><button onclick="resetFilters()" class="btn-secondary">RESET</button></div>
+            <div><label>Cert #</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Cert #"></div>
+            <div class="filter-actions">
+                <button onclick="resetFilters()" class="btn-secondary">RESET</button>
+            </div>
         </section>
 
         <div class="inventory-card">
             <table>
                 <thead>
-                    <tr><th>ID</th><th>Material</th><th>Thick</th><th>Size</th><th>Loc</th><th>Heat #</th><th>Date</th><th>Status</th><th>User</th><th>Actions</th></tr>
+                    <tr><th>ID</th><th>Material</th><th>Thick</th><th>Size</th><th>Loc</th><th>Cert #</th><th>Date</th><th>Status</th><th>User</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="inventory-table-body"></tbody>
             </table>

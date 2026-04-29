@@ -1,3 +1,4 @@
+// SECTION: SHARED RESOURCE LOGIC
 let cachedInventory = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -56,8 +57,8 @@ function applyFilters() {
         const matchStatus = !status || (status === "AVAILABLE" ? item.reserve === 'AVAILABLE' : item.reserve !== 'AVAILABLE');
         const matchThick = thickness === "All" || item.thickness === thickness;
         const matchLoc = location === "All" || item.location === location;
-        const matchCert = !certSearch || String(item.cert).toLowerCase().includes(certSearch);
-        const matchSize = !sizeSearch || String(item.size).toLowerCase().includes(sizeSearch);
+        const matchCert = !certSearch || String(item.cert || "").toLowerCase().includes(certSearch);
+        const matchSize = !sizeSearch || String(item.size || "").toLowerCase().includes(sizeSearch);
         return matchStatus && matchThick && matchLoc && matchCert && matchSize;
     });
     renderInventoryTable(filtered);
@@ -66,11 +67,19 @@ function applyFilters() {
 function renderInventoryTable(data) {
     const tableBody = document.getElementById('inventory-table-body');
     if (!tableBody) return;
+
+    // Check if we are on the Full Sheet page
+    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
+
     tableBody.innerHTML = data.map(item => `
         <tr>
             <td class="id-cell">${item.id}</td>
-            <td>${item.type}</td><td>${item.thickness}</td><td>${item.size}</td><td>${item.location}</td>
-            <td>${item.cert}</td><td>${item.dateAdded}</td>
+            <td>${item.type}</td>
+            <td>${item.thickness}</td>
+            <td>${item.size}</td>
+            <td>${item.location}</td>
+            <td>${isFullSheet ? (item.qty || 1) : (item.cert || 'N/A')}</td>
+            <td>${item.dateAdded}</td>
             <td class="${item.reserve === 'AVAILABLE' ? 'status-ready' : 'status-held'}">${item.reserve}</td>
             <td>${item.user}</td>
             <td class="action-cell">
@@ -92,9 +101,14 @@ async function submitNewItem() {
     const len = document.getElementById('new-len')?.value;
     const wid = document.getElementById('new-wid')?.value;
     const loc = document.getElementById('new-location')?.value;
-    const cert = document.getElementById('new-cert-add')?.value || 'N/A';
+    
+    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
+    
+    // Logic to toggle between QTY or Cert # based on the page
+    const qtyValue = isFullSheet ? document.getElementById('new-qty')?.value : 1;
+    const certValue = !isFullSheet ? document.getElementById('new-cert-add')?.value : 'N/A';
 
-    if (!type || !len || !wid) return alert("Required fields missing.");
+    if (!type || !len || !wid) return alert("Fill required fields.");
 
     const payload = {
         action: 'add',
@@ -104,7 +118,8 @@ async function submitNewItem() {
         thickness: thickness,
         size: `${len} x ${wid}`,
         location: loc,
-        cert: cert,
+        cert: certValue,
+        qty: qtyValue,
         notes: document.getElementById('new-notes')?.value || '',
         user: auth.currentUser?.email || 'System',
         dateAdded: new Date().toLocaleDateString('en-US'),
@@ -136,6 +151,16 @@ function toggleForm() {
 }
 
 function openReserveModal(row, id, tab) {
+    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
     const jobNum = prompt(`Enter Job Number for ${id}:`);
-    if (jobNum) postTransaction({ action: 'reserve', rowNumber: row, tabName: tab, jobNum: jobNum });
+    if (!jobNum) return;
+
+    let payload = { action: 'reserve', rowNumber: row, tabName: tab, jobNum: jobNum };
+
+    if (isFullSheet) {
+        const reserveQty = prompt("How many sheets to reserve?");
+        if (reserveQty) payload.jobNum += ` (Qty: ${reserveQty})`;
+    }
+
+    postTransaction(payload);
 }
