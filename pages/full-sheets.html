@@ -47,17 +47,9 @@
             <div><label>Material</label><select id="filter-material" onchange="loadInventoryData()"></select></div>
             <div><label>Thickness</label><select id="filter-thickness" onchange="applyFilters()"></select></div>
             <div><label>Location</label><select id="filter-location" onchange="applyFilters()"></select></div>
-            <div><label>Status</label>
-                <select id="filter-status" onchange="applyFilters()">
-                    <option value="">All Statuses</option>
-                    <option value="AVAILABLE">Available</option>
-                    <option value="RESERVED">Reserved</option>
-                </select>
-            </div>
+            <div><label>Status</label><select id="filter-status" onchange="applyFilters()"><option value="">All Statuses</option><option value="AVAILABLE">Available</option><option value="RESERVED">Reserved</option></select></div>
             <div><label>Size</label><input type="text" id="filter-size" onkeyup="applyFilters()" placeholder="Size..."></div>
-            <div class="filter-actions">
-                <button onclick="resetFilters()" class="btn-secondary">RESET</button>
-            </div>
+            <div><button onclick="resetFilters()" class="btn-secondary">RESET</button></div>
         </section>
 
         <div class="inventory-card">

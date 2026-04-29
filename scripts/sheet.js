@@ -1,4 +1,3 @@
-// SECTION: SHARED RESOURCE LOGIC
 let cachedInventory = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,6 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
         auth.onAuthStateChanged(user => { if (user) loadInventoryData(); });
     }
 });
+
+// SECTION: CLEAN DATE FORMATTING
+function cleanDate(dateStr) {
+    if (!dateStr) return "N/A";
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr; 
+    return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+}
 
 function initializeInterface() {
     populateDropdowns();
@@ -67,59 +74,53 @@ function applyFilters() {
 function renderInventoryTable(data) {
     const tableBody = document.getElementById('inventory-table-body');
     if (!tableBody) return;
-
-    // Check if we are on the Full Sheet page
     const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
 
     tableBody.innerHTML = data.map(item => `
         <tr>
-            <td class="id-cell">${item.id}</td>
-            <td>${item.type}</td>
-            <td>${item.thickness}</td>
-            <td>${item.size}</td>
-            <td>${item.location}</td>
-            <td>${isFullSheet ? (item.qty || 1) : (item.cert || 'N/A')}</td>
-            <td>${item.dateAdded}</td>
-            <td class="${item.reserve === 'AVAILABLE' ? 'status-ready' : 'status-held'}">${item.reserve}</td>
-            <td>${item.user}</td>
+            <td class="id-cell" data-label="ID">${item.id}</td>
+            <td data-label="Material">${item.type}</td>
+            <td data-label="Thick">${item.thickness}</td>
+            <td data-label="Size">${item.size}</td>
+            <td data-label="Loc">${item.location}</td>
+            <td data-label="${isFullSheet ? 'QTY' : 'Cert #'}">${isFullSheet ? (item.qty || 1) : (item.cert || 'N/A')}</td>
+            <td data-label="Date">${cleanDate(item.dateAdded)}</td>
+            <td data-label="Status" class="${item.reserve === 'AVAILABLE' ? 'status-ready' : 'status-held'}">${item.reserve}</td>
+            <td data-label="User">${item.user}</td>
             <td class="action-cell">
-                <button onclick="openReserveModal(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="btn-action btn-reserve">RESERVE</button>
-                <button onclick="removeResource(${item.rowNumber}, '${item.id}', '${item.tabName}')" class="btn-action btn-remove">USE</button>
+                <button onclick="openReserveModal(${item.rowNumber}, '${item.id}', '${item.tabName}', ${item.qty || 1})" class="btn-action btn-reserve">RESERVE</button>
+                <button onclick="removeResource(${item.rowNumber}, '${item.id}', '${item.tabName}', ${item.qty || 1})" class="btn-action btn-remove">USE</button>
             </td>
         </tr>
     `).join('');
 }
 
-async function removeResource(row, id, tab) {
-    if (!confirm(`Confirm removal of ${id}?`)) return;
-    await postTransaction({ action: 'use', rowNumber: row, tabName: tab });
+async function removeResource(row, id, tab, currentQty) {
+    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
+    if (isFullSheet && currentQty > 1) {
+        const used = prompt(`Inventory: ${currentQty} pieces. How many are you using?`, "1");
+        if (!used || isNaN(used)) return;
+        await postTransaction({ action: 'updateQty', rowNumber: row, tabName: tab, usedQty: parseInt(used) });
+    } else {
+        if (!confirm(`Confirm removal of ${id}?`)) return;
+        await postTransaction({ action: 'use', rowNumber: row, tabName: tab });
+    }
 }
 
 async function submitNewItem() {
     const type = document.getElementById('new-type')?.value;
-    const thickness = document.getElementById('new-thickness')?.value;
-    const len = document.getElementById('new-len')?.value;
-    const wid = document.getElementById('new-wid')?.value;
-    const loc = document.getElementById('new-location')?.value;
-    
     const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
     
-    // Logic to toggle between QTY or Cert # based on the page
-    const qtyValue = isFullSheet ? document.getElementById('new-qty')?.value : 1;
-    const certValue = !isFullSheet ? document.getElementById('new-cert-add')?.value : 'N/A';
-
-    if (!type || !len || !wid) return alert("Fill required fields.");
-
     const payload = {
         action: 'add',
         tabName: type,
         id: 'LN-' + Math.random().toString(36).substr(2, 4).toUpperCase(),
         type: type,
-        thickness: thickness,
-        size: `${len} x ${wid}`,
-        location: loc,
-        cert: certValue,
-        qty: qtyValue,
+        thickness: document.getElementById('new-thickness')?.value,
+        size: `${document.getElementById('new-len')?.value} x ${document.getElementById('new-wid')?.value}`,
+        location: document.getElementById('new-location')?.value,
+        cert: !isFullSheet ? document.getElementById('new-cert-add')?.value : 'N/A',
+        qty: isFullSheet ? document.getElementById('new-qty')?.value : 1,
         notes: document.getElementById('new-notes')?.value || '',
         user: auth.currentUser?.email || 'System',
         dateAdded: new Date().toLocaleDateString('en-US'),
@@ -136,6 +137,20 @@ async function postTransaction(payload) {
     } catch(e) { location.reload(); }
 }
 
+function openReserveModal(row, id, tab, currentQty) {
+    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
+    const jobNum = prompt(`Enter Job Number for ${id}:`);
+    if (!jobNum) return;
+
+    let finalStatus = jobNum;
+    if (isFullSheet) {
+        const resQty = prompt(`In Stock: ${currentQty}. How many sheets for this job?`, "1");
+        if (resQty) finalStatus += ` (Qty: ${resQty})`;
+    }
+
+    postTransaction({ action: 'reserve', rowNumber: row, tabName: tab, jobNum: finalStatus });
+}
+
 function resetFilters() {
     const filterIds = ['filter-material', 'filter-thickness', 'filter-location', 'filter-status', 'filter-cert', 'filter-size'];
     filterIds.forEach(id => {
@@ -148,19 +163,4 @@ function resetFilters() {
 function toggleForm() {
     const form = document.getElementById('add-item-form');
     if (form) form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
-}
-
-function openReserveModal(row, id, tab) {
-    const isFullSheet = window.CURRENT_RESOURCE_ID === SHEET_CONFIG.IDS.FULL_SHEET;
-    const jobNum = prompt(`Enter Job Number for ${id}:`);
-    if (!jobNum) return;
-
-    let payload = { action: 'reserve', rowNumber: row, tabName: tab, jobNum: jobNum };
-
-    if (isFullSheet) {
-        const reserveQty = prompt("How many sheets to reserve?");
-        if (reserveQty) payload.jobNum += ` (Qty: ${reserveQty})`;
-    }
-
-    postTransaction(payload);
 }

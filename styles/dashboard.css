@@ -33,26 +33,15 @@ body {
 .nav-tabs { display: flex; gap: 1.5rem; margin: 0 auto; height: 70px; }
 
 .tab, .dropdown-btn { 
-    display: flex;
-    align-items: center;
-    color: var(--text-muted); 
-    text-decoration: none; 
-    font-weight: 700; 
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    border-bottom: 3px solid transparent;
-    transition: 0.2s;
-    height: 100%;
-    padding: 0 10px;
-    background: none;
-    border-top: none; border-left: none; border-right: none;
-    cursor: pointer;
+    display: flex; align-items: center; color: var(--text-muted); 
+    text-decoration: none; font-weight: 700; font-size: 0.9rem;
+    text-transform: uppercase; border-bottom: 3px solid transparent;
+    transition: 0.2s; height: 100%; padding: 0 10px; background: none; cursor: pointer;
 }
 
 .tab:hover, .tab.active, .dropdown:hover .dropdown-btn { color: var(--accent); }
 .tab.active, .dropdown-btn.active { border-bottom-color: var(--accent); }
 
-/* Dropdown */
 .dropdown { position: relative; display: flex; align-items: center; height: 100%; }
 .dropdown-content {
     display: none; position: absolute; top: 70px; left: 0; background-color: var(--bg-surface);
@@ -60,21 +49,63 @@ body {
     box-shadow: 0 8px 24px rgba(0,0,0,0.8);
 }
 .dropdown-content a { color: var(--text); padding: 14px 20px; text-decoration: none; display: block; font-size: 0.85rem; }
-.dropdown-content a:hover { background: var(--bg-deep); color: var(--accent); }
 .dropdown:hover .dropdown-content { display: block; }
 
-/* SECTION: FILTERS */
-.filter-container {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 15px;
-    padding: 20px;
-    align-items: end;
+/* SECTION: MOBILE OPTIMIZATION (THE FIX) */
+@media (max-width: 768px) {
+    .nav-tabs { display: none; }
+    .content-container { padding: 10px; }
+    .header-action-row { flex-direction: column; gap: 15px; align-items: flex-start; }
+
+    /* Stack Table into Cards */
+    table, thead, tbody, th, td, tr { display: block; }
+    thead tr { position: absolute; top: -9999px; left: -9999px; }
+    
+    tr {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 20px;
+        padding: 12px;
+    }
+    
+    td {
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 0.9rem;
+        white-space: normal;
+        text-align: right;
+    }
+    
+    td::before {
+        content: attr(data-label);
+        font-weight: 800;
+        color: var(--accent);
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        text-align: left;
+        margin-right: 15px;
+    }
+
+    .action-cell {
+        justify-content: center;
+        border-top: 1px solid var(--border);
+        margin-top: 12px;
+        padding-top: 15px;
+    }
+
+    .filter-container {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
 }
-.filter-container label { display: block; font-size: 0.65rem; text-transform: uppercase; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; }
+
+.filter-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; padding: 20px; align-items: end; }
+.filter-container label { display: block; font-size: 0.65rem; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; }
 input, select { background: #0a0a0b; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 4px; width: 100%; box-sizing: border-box; }
 
-/* SECTION: TABLES & ACTION BUTTONS */
 .inventory-card { background: var(--bg-surface); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.5rem; overflow: hidden; }
 table { width: 100%; border-collapse: collapse; }
 th { background: #111; padding: 15px; text-align: left; font-size: 0.7rem; color: var(--text-muted); border-bottom: 2px solid var(--accent); }
@@ -90,10 +121,3 @@ td { padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 0.85
 .btn-action { padding: 6px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; cursor: pointer; margin: 0 2px; border: none; text-transform: uppercase; display: inline-block; }
 .btn-reserve { border: 1px solid var(--accent) !important; background: transparent !important; color: var(--accent) !important; }
 .btn-remove { background: #ff4444 !important; color: white !important; }
-
-.header-action-row { display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem; margin-bottom: 1.5rem; }
-.content-container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
-
-.logout-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-
-@media (max-width: 1200px) { .filter-container { grid-template-columns: repeat(4, 1fr); } }
