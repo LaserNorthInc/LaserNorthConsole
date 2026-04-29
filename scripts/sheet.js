@@ -126,12 +126,33 @@ async function submitNewItem() {
     await postToGoogle(payload);
 }
 
+// SECTION: SENDING DATA TO THE SHOP SPREADSHEET
 async function postToGoogle(payload) {
     payload.sheetId = SHEET_CONFIG.IDS.FULL_SHEET;
+    
+    // Show a loading state on the button
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = "SAVING...";
+    btn.disabled = true;
+
     try {
-        await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+        // We use 'cors' mode. If you get a CORS error, 
+        // ensure your Google Script is deployed as 'Anyone'
+        await fetch(SHEET_CONFIG.SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        
+        // Refresh to show updated data
+        alert("Inventory Updated Successfully");
         location.reload();
-    } catch(e) { alert("Network Error"); }
+    } catch(e) {
+        console.error("Save failed:", e);
+        alert("Connection Error. Check your internet or Google Script deployment.");
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
 }
 
 function toggleForm() {

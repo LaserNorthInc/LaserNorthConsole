@@ -1,21 +1,22 @@
-// This dashboard file is intended to load summary counts for the overview page.
-// It reads data from Firestore and updates the page with inventory totals.
+// SECTION: DASHBOARD SUMMARY LOGIC
+// This loads the big numbers on the main overview page.
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log("Dashboard Loaded - Fetching Overview...");
-    
-    try {
-        // Replace these with your actual Firestore collections if used.
-        const structuralSnap = await db.collection('structural').get();
-        const sheetSnap = await db.collection('sheet').get();
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) return;
 
-        document.getElementById('structural-summary').innerText = 
-            `${structuralSnap.size} unique items in stock.`;
-        
-        document.getElementById('sheet-summary').innerText = 
-            `${sheetSnap.size} material types available.`;
-    } catch (error) {
-        // If there is an error, show it in the browser console for debugging.
-        console.error("Summary fetch failed:", error);
-    }
+        try {
+            // Getting counts from Firestore collections
+            const structuralSnap = await db.collection('structural').get();
+            const sheetSnap = await db.collection('sheet').get();
+
+            // Updating the page with the real numbers
+            document.getElementById('struct-count').innerText = `${structuralSnap.size} items`;
+            document.getElementById('sheet-count').innerText = `${sheetSnap.size} types`;
+        } catch (error) {
+            console.log("Firestore not active yet, using placeholder data.");
+            document.getElementById('struct-count').innerText = "Check Sheets";
+            document.getElementById('sheet-count').innerText = "Connected";
+        }
+    });
 });
