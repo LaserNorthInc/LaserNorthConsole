@@ -280,6 +280,14 @@ td {
 .id-cell { color: var(--accent); font-weight: 800; font-family: monospace; }
 .status-ready { color: var(--success); font-weight: bold; }
 .status-held { color: var(--accent); font-weight: bold; }
+.status-available {
+    color: var(--success);
+    font-weight: 800;
+}
+.status-reserved {
+    color: var(--danger);
+    font-weight: 800;
+}
 
 /* SECTION: BUTTONS */
 .btn-primary {
@@ -439,12 +447,18 @@ td {
     
     .nav-tabs.active { display: flex; }
     
+    .dropdown {
+        width: 100%;
+        display: block;
+    }
+
     .tab, .dropdown-btn {
         width: 100%;
         padding: 18px 2rem;
         border: none;
         height: auto;
         justify-content: flex-start;
+        text-align: left;
     }
 
     .dropdown-content {

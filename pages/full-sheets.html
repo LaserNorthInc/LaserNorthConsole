@@ -124,6 +124,24 @@
         </div>
     </div>
 
+    <div id="note-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="note-modal-title" style="margin:0; color:var(--accent);">Edit Notes</h2>
+                <p id="note-modal-part-id" style="font-family:monospace; color:var(--text-muted); margin-top:5px; font-size:0.8rem;"></p>
+            </div>
+            <div style="margin-bottom:1.2rem;">
+                <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:5px;">Note (max 50 chars)</label>
+                <textarea id="note-modal-input" maxlength="50" rows="4" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border); background: #0a0a0b; color: var(--text); resize:none;"></textarea>
+                <div id="note-modal-count" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:right;">0/50</div>
+            </div>
+            <div class="modal-footer" style="display:flex; gap:10px;">
+                <button class="btn-primary" style="flex:1;" onclick="submitNote()">Save Note</button>
+                <button class="btn-secondary" style="flex:1;" onclick="closeNoteModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>

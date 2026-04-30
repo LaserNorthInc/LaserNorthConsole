@@ -67,15 +67,15 @@ function doPost(e) {
       if (data.pageMode === 'croppers') {
         var reservedCell = sheet.getRange(data.rowNumber, 8);
         reservedCell.setValue(data.reserveFor || 'Reserved');
-
-        var noteCell = sheet.getRange(data.rowNumber, 10);
-        var currentNote = noteCell.getValue();
-        noteCell.setValue((currentNote || '') + ' | Reserved For: ' + (data.reserveFor || 'Reserved'));
       } else {
         var availCell = sheet.getRange(data.rowNumber, 6);
         var currentAvail = parseInt(availCell.getValue()) || 0;
         availCell.setValue(currentAvail - data.reserveQty);
       }
+    }
+    else if (data.action === "updateNote") {
+      var noteCell = sheet.getRange(data.rowNumber, 10);
+      noteCell.setValue(data.note || '');
     }
     else if (data.action === "useCropper") {
       sheet.deleteRow(data.rowNumber);

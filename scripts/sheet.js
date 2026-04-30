@@ -94,6 +94,8 @@ function renderInventoryTable(data) {
     tableBody.innerHTML = data.map(item => {
         const cert = item.cert || item.availableStock || '';
         const reservedFor = item.reservedFor || '';
+        const reservedDisplay = reservedFor ? reservedFor : 'AVAILABLE';
+        const reservedClass = reservedFor ? 'status-reserved' : 'status-available';
         const dateAdded = cleanDate(item.dateAdded || item.dateAddedRaw || '');
         const notes = item.notes || '';
         const user = item.user || 'System';
@@ -110,12 +112,13 @@ function renderInventoryTable(data) {
                     <td data-label="Location">${item.location}</td>
                     <td data-label="Cert">${cert}</td>
                     <td data-label="Date Added">${dateAdded}</td>
-                    <td data-label="Reserved For">${reservedFor}</td>
+                    <td data-label="Reserved For" class="${reservedClass}">${reservedDisplay}</td>
                     <td data-label="User">${user}</td>
                     <td data-label="Notes">${notes}</td>
                     <td class="action-cell">
                         <button onclick="openTransactionModal('use', ${item.rowNumber}, '${item.id}', '${item.tabName}', 0)" class="btn-action btn-remove">USE</button>
                         <button onclick="openTransactionModal('reserve', ${item.rowNumber}, '${item.id}', '${item.tabName}', 0, '${reservedFor.replace(/'/g, "\\'")}')" class="btn-action btn-secondary">RESERVE</button>
+                        <button onclick="openNoteModal(${item.rowNumber}, '${item.tabName}', '${item.id}', '${notes.replace(/'/g, "\\'")}')" class="btn-action btn-secondary">NOTE</button>
                     </td>
                 </tr>`;
         }
@@ -135,6 +138,7 @@ function renderInventoryTable(data) {
                 <td class="action-cell">
                     <button onclick="openTransactionModal('use', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${avail}, ${total})" class="btn-action btn-remove">USE</button>
                     <button onclick="openTransactionModal('reserve', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${avail})" class="btn-action btn-secondary">RESERVE</button>
+                    <button onclick="openNoteModal(${item.rowNumber}, '${item.tabName}', '${item.id}', '${notes.replace(/'/g, "\\'")}')" class="btn-action btn-secondary">NOTE</button>
                 </td>
             </tr>`;
     }).join('');
@@ -206,13 +210,52 @@ function closeTransactionModal() {
     document.getElementById('transaction-modal').style.display = 'none';
 }
 
+function openNoteModal(row, tab, id, currentNotes = '') {
+    const modal = document.getElementById('note-modal');
+    if (!modal) return;
+
+    window.currentNoteTx = { rowNumber: row, tabName: tab };
+    document.getElementById('note-modal-title').innerText = 'Edit Notes';
+    document.getElementById('note-modal-part-id').innerText = `${tab} | ${id}`;
+    const noteInput = document.getElementById('note-modal-input');
+    noteInput.value = currentNotes || '';
+    document.getElementById('note-modal-count').innerText = `${noteInput.value.length}/50`;
+    noteInput.oninput = () => document.getElementById('note-modal-count').innerText = `${noteInput.value.length}/50`;
+    modal.style.display = 'flex';
+}
+
+function closeNoteModal() {
+    const modal = document.getElementById('note-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function submitNote() {
+    const { rowNumber, tabName } = window.currentNoteTx || {};
+    const noteInput = document.getElementById('note-modal-input');
+    if (!noteInput || !rowNumber || !tabName) return;
+
+    const noteValue = noteInput.value.trim().slice(0, 50);
+    const payload = {
+        action: 'updateNote',
+        rowNumber,
+        tabName,
+        note: noteValue
+    };
+
+    await postTransaction(payload);
+}
+
 async function submitTransaction() {
     const { action, row, tab, availQty, totalQty, reservedQty } = window.currentTx;
     const payload = { rowNumber: row, tabName: tab };
 
     if (IS_CROPPER_PAGE) {
         if (action === 'reserve') {
-            const reservedFor = document.getElementById('modal-reserved-for-input')?.value || auth?.currentUser?.email || 'Reserved';
+            const rawValue = document.getElementById('modal-reserved-for-input')?.value.trim();
+            let reservedFor = 'RESERVED';
+            if (rawValue) {
+                reservedFor = /^JOB\b/i.test(rawValue) ? rawValue : `JOB ${rawValue}`;
+            }
             payload.action = 'reserve';
             payload.pageMode = PAGE_MODE;
             payload.reserveFor = reservedFor;
