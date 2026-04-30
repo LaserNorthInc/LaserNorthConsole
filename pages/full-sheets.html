@@ -6,7 +6,7 @@
     <title>Full Sheet Stock | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
-<body>
+<body data-page-mode="full-sheet">
     <nav class="app-nav">
         <div class="nav-left-group">
             <div class="nav-brand">LNI CONSOLE</div>
@@ -75,16 +75,8 @@
             <div><label>Material</label><select id="filter-material" onchange="loadInventoryData()"></select></div>
             <div><label>Thickness</label><select id="filter-thickness" onchange="applyFilters()"></select></div>
             <div><label>Location</label><select id="filter-location" onchange="applyFilters()"></select></div>
-            <div>
-                <label>Status</label>
-                <select id="filter-status" onchange="applyFilters()">
-                    <option value="">All Statuses</option>
-                    <option value="AVAILABLE">Available</option>
-                    <option value="RESERVED">Reserved</option>
-                </select>
-            </div>
             <div><label>Size</label><input type="text" id="filter-size" onkeyup="applyFilters()" placeholder="Search size..."></div>
-            <div><label>Cert # Search</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Heat # search..."></div>
+            <div><label>Cert # Search</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Cert # search..."></div>
             <div class="filter-actions">
                 <button onclick="resetFilters()" class="btn-secondary">RESET</button>
             </div>
@@ -95,15 +87,16 @@
                 <thead>
                     <tr>
                             <th>ID</th>
-                            <th>MATERIAL</th>
-                            <th>THICK</th>
-                            <th>SIZE</th>
-                            <th>LOC</th>
-                            <th>AVAILABLE</th>
-                            <th>TOTAL STOCK</th>
-                            <th>USER</th>
-                            <th>DATE</th>
-                            <th>ACTIONS</th>
+                            <th>Type</th>
+                            <th>Thickness</th>
+                            <th>Size</th>
+                            <th>Location</th>
+                            <th>Available Qty</th>
+                            <th>Total Qty</th>
+                            <th>Date Added</th>
+                            <th>User</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="inventory-table-body">
@@ -127,6 +120,20 @@
             <div id="modal-qty-group" style="margin-bottom:1.5rem; display:none;">
                 <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:8px;">Quantity</label>
                 <input type="number" id="modal-qty-input" value="1" min="1">
+            </div>
+
+            <div id="modal-use-mode-group" style="margin-bottom:1.5rem; display:none;">
+                <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:8px;">Use Mode</label>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-weight:700;"><input type="radio" name="modal-use-mode" id="modal-use-nonreserved" value="nonReserved" checked> Use non-reserved pieces (subtract available + total)</label>
+                    <label style="font-weight:700;"><input type="radio" name="modal-use-mode" id="modal-use-reserved" value="reserved"> Use reserved pieces only (subtract total only)</label>
+                    <div id="modal-use-mode-note" style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;"></div>
+                </div>
+            </div>
+
+            <div id="modal-reserved-for-group" style="margin-bottom:1.5rem; display:none;">
+                <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:8px;">Reserved For</label>
+                <input type="text" id="modal-reserved-for-input" placeholder="Name or job">
             </div>
 
             <div class="modal-footer" style="display:flex; gap:10px;">

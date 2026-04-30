@@ -6,7 +6,7 @@
     <title>Cropper Remnants | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
-<body>
+<body data-page-mode="croppers">
     <nav class="app-nav">
         <div class="nav-left-group">
             <div class="nav-brand">LNI CONSOLE</div>
@@ -37,14 +37,37 @@
         <section id="add-item-form" class="inventory-card" style="display:none; padding:20px; border-left:4px solid var(--accent);">
             <h3 style="margin-top:0; color:var(--accent);">Log New Remnant</h3>
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:15px;">
-                <div><label>Type</label><select id="new-type"></select></div>
-                <div><label>Thickness</label><select id="new-thickness"></select></div>
-                <div><label>Length (in)</label><input type="number" id="new-len" step="0.01"></div>
-                <div><label>Width (in)</label><input type="number" id="new-wid" step="0.01"></div>
-                <div><label>Location</label><select id="new-location"></select></div>
-                <div><label>Cert #</label><input type="text" id="new-cert-add"></div>
-                <div><label>Notes</label><input type="text" id="new-notes"></div>
-                <div style="display:flex; align-items:flex-end;"><button class="btn-primary" onclick="submitNewItem()">Submit</button></div>
+                <div>
+                    <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">TYPE</label>
+                    <select id="new-type"></select>
+                </div>
+                <div>
+                    <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">THICKNESS</label>
+                    <select id="new-thickness"></select>
+                </div>
+                <div>
+                    <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">LENGTH (in)</label>
+                    <input type="number" id="new-len" step="0.01" placeholder="0.00">
+                </div>
+                <div>
+                    <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">WIDTH (in)</label>
+                    <input type="number" id="new-wid" step="0.01" placeholder="0.00">
+                </div>
+                <div>
+                    <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">LOCATION</label>
+                    <select id="new-location"></select>
+                </div>
+                <div>
+                    <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">CERT #</label>
+                    <input type="text" id="new-cert-add" placeholder="Optional">
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">NOTES</label>
+                    <input type="text" id="new-notes" placeholder="Optional notes...">
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <button class="btn-primary" style="width:100%;" onclick="submitNewItem()">Submit</button>
+                </div>
             </div>
         </section>
 
@@ -53,15 +76,29 @@
             <div><label>Thickness</label><select id="filter-thickness" onchange="applyFilters()"></select></div>
             <div><label>Location</label><select id="filter-location" onchange="applyFilters()"></select></div>
             <div><label>Status</label><select id="filter-status" onchange="applyFilters()"><option value="">All</option><option value="AVAILABLE">Available</option><option value="RESERVED">Reserved</option></select></div>
-            <div><label>Size</label><input type="text" id="filter-size" onkeyup="applyFilters()"></div>
-            <div><label>Cert #</label><input type="text" id="filter-cert" onkeyup="applyFilters()"></div>
-            <button onclick="resetFilters()" class="btn-secondary">RESET</button>
+            <div><label>Size</label><input type="text" id="filter-size" onkeyup="applyFilters()" placeholder="Search size..."></div>
+            <div><label>Cert #</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Search cert..."></div>
+            <div class="filter-actions">
+                <button onclick="resetFilters()" class="btn-secondary">RESET</button>
+            </div>
         </section>
 
         <div class="inventory-card">
             <table>
                 <thead>
-                    <tr><th>ID</th><th>Material</th><th>Thick</th><th>Size</th><th>Loc</th><th>Cert #</th><th>Date Added</th><th>Status</th><th>User</th><th>Actions</th></tr>
+                    <tr>
+                        <th>ID</th>
+                        <th>Type</th>
+                        <th>Thickness</th>
+                        <th>Size</th>
+                        <th>Location</th>
+                        <th>Cert</th>
+                        <th>Date Added</th>
+                        <th>Reserved For</th>
+                        <th>User</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
                 </thead>
                 <tbody id="inventory-table-body"></tbody>
             </table>
@@ -81,6 +118,18 @@
             <div id="modal-qty-group" style="margin-bottom:1.2rem; display:none;">
                 <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:5px;">QUANTITY</label>
                 <input type="number" id="modal-qty-input" value="1" min="1">
+            </div>
+            <div id="modal-use-mode-group" style="margin-bottom:1.2rem; display:none;">
+                <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:5px;">USE MODE</label>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-weight:700;"><input type="radio" name="modal-use-mode" id="modal-use-nonreserved" value="nonReserved" checked> Use non-reserved pieces (subtract available + total)</label>
+                    <label style="font-weight:700;"><input type="radio" name="modal-use-mode" id="modal-use-reserved" value="reserved"> Use reserved pieces only (subtract total only)</label>
+                    <div id="modal-use-mode-note" style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;"></div>
+                </div>
+            </div>
+            <div id="modal-reserved-for-group" style="margin-bottom:1.2rem; display:none;">
+                <label style="font-size:0.7rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:5px;">RESERVED FOR</label>
+                <input type="text" id="modal-reserved-for-input" placeholder="Name or job">
             </div>
             <div class="modal-footer" style="display:flex; gap:10px;">
                 <button class="btn-primary" style="flex:1" onclick="submitTransaction()">Confirm</button>

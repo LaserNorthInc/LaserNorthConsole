@@ -1,0 +1,145 @@
+/**
+ * LNI CONSOLE BACKEND - v11 (Direct Available Stock Management)
+ */
+function doGet(e) {
+  try {
+    var ss = SpreadsheetApp.openById(e.parameter.id);
+    var targetTab = e.parameter.tab;
+    var pageMode = e.parameter.pageMode || 'full-sheet';
+    var combinedData = [];
+    var sheets = (targetTab === 'All') ? ss.getSheets() : [ss.getSheetByName(targetTab)];
+
+    sheets.forEach(function(sheet) {
+      if (!sheet) return;
+      var tabName = sheet.getName();
+      var rows = sheet.getDataRange().getValues();
+      rows.shift();
+
+      rows.forEach(function(row, index) {
+        if (row[0]) {
+          if (pageMode === 'croppers') {
+            combinedData.push({
+              rowNumber: index + 2,
+              tabName: tabName,
+              id: row[0],
+              type: row[1],
+              thickness: row[2],
+              size: row[3],
+              location: row[4],
+              cert: row[5],
+              dateAdded: row[6],
+              reservedFor: row[7],
+              user: row[8],
+              notes: row[9]
+            });
+          } else {
+            combinedData.push({
+              rowNumber: index + 2,
+              tabName: tabName,
+              id: row[0],
+              type: row[1],
+              thickness: row[2],
+              size: row[3],
+              location: row[4],
+              availableStock: parseInt(row[5]) || 0,
+              totalStock: parseInt(row[6]) || 0,
+              user: row[7],
+              dateAdded: row[8],
+              notes: row[9]
+            });
+          }
+        }
+      });
+    });
+    return ContentService.createTextOutput(JSON.stringify(combinedData)).setMimeType(ContentService.MimeType.JSON);
+  } catch (f) {
+    return ContentService.createTextOutput(JSON.stringify({error: f.message}));
+  }
+}
+
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.openById(data.sheetId);
+    var sheet = ss.getSheetByName(data.tabName);
+    
+    if (data.action === "reserve") {
+      if (data.pageMode === 'croppers') {
+        var reservedCell = sheet.getRange(data.rowNumber, 8);
+        reservedCell.setValue(data.reserveFor || 'Reserved');
+
+        var noteCell = sheet.getRange(data.rowNumber, 10);
+        var currentNote = noteCell.getValue();
+        noteCell.setValue((currentNote || '') + ' | Reserved For: ' + (data.reserveFor || 'Reserved'));
+      } else {
+        var availCell = sheet.getRange(data.rowNumber, 6);
+        var currentAvail = parseInt(availCell.getValue()) || 0;
+        availCell.setValue(currentAvail - data.reserveQty);
+      }
+    }
+    else if (data.action === "useCropper") {
+      sheet.deleteRow(data.rowNumber);
+    }
+    else if (data.action === "useReservedQty") {
+      var totalCell = sheet.getRange(data.rowNumber, 7);
+      var newTotal = (parseInt(totalCell.getValue()) || 0) - data.usedQty;
+      if (newTotal <= 0) {
+        sheet.deleteRow(data.rowNumber);
+      } else {
+        totalCell.setValue(newTotal);
+      }
+    }
+    else if (data.action === "updateQty") {
+      var availCell = sheet.getRange(data.rowNumber, 6);
+      var totalCell = sheet.getRange(data.rowNumber, 7);
+      
+      var newAvail = (parseInt(availCell.getValue()) || 0) - data.usedQty;
+      var newTotal = (parseInt(totalCell.getValue()) || 0) - data.usedQty;
+      
+      if (newTotal <= 0) {
+        sheet.deleteRow(data.rowNumber);
+      } else {
+        availCell.setValue(Math.max(0, newAvail));
+        totalCell.setValue(newTotal);
+      }
+    }
+    else if (data.action === "add") {
+      if (data.pageMode === 'croppers') {
+        sheet.appendRow([data.id, data.type, data.thickness, data.size, data.location, data.cert, data.dateAdded, data.reservedFor || '', data.user, data.notes]);
+      } else {
+        var rows = sheet.getDataRange().getValues();
+        var existingRow = null;
+
+        for (var i = 1; i < rows.length; i++) {
+          var row = rows[i];
+          if (row[1] === data.type && row[2] === data.thickness && row[3] === data.size && row[4] === data.location) {
+            existingRow = i + 1;
+            break;
+          }
+        }
+
+        if (existingRow) {
+          var availCell = sheet.getRange(existingRow, 6);
+          var totalCell = sheet.getRange(existingRow, 7);
+          var noteCell = sheet.getRange(existingRow, 10);
+
+          var currentAvail = parseInt(availCell.getValue()) || 0;
+          var currentTotal = parseInt(totalCell.getValue()) || 0;
+          var currentNotes = noteCell.getValue() || '';
+
+          availCell.setValue(currentAvail + data.qty);
+          totalCell.setValue(currentTotal + data.qty);
+
+          if (data.notes) {
+            noteCell.setValue(currentNotes ? currentNotes + ' | ' + data.notes : data.notes);
+          }
+        } else {
+          sheet.appendRow([data.id, data.type, data.thickness, data.size, data.location, data.qty, data.qty, data.user, data.dateAdded, data.notes]);
+        }
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({"result": "success"})).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({"result": "error", "message": err.message})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
