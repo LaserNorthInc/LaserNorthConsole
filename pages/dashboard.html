@@ -7,23 +7,7 @@
     <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
 <body>
-    <nav class="app-nav">
-        <div class="nav-left-group">
-            <div class="nav-brand">LNI CONSOLE</div>
-            <div class="nav-tabs">
-                <a href="dashboard.html" class="tab active">Dashboard</a>
-                <a href="structural.html" class="tab">Structural</a>
-                <div class="dropdown">
-                    <button class="tab dropdown-btn">Sheets ▾</button>
-                    <div class="dropdown-content">
-                        <a href="full-sheets.html">Full Sheet</a>
-                        <a href="sheet.html">Croppers</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <button class="logout-btn" onclick="logoutUser()">Logout</button>
-    </nav>
+    <div id="header-placeholder"></div>
 
     <main class="content-container">
         <h1>Overview</h1>
@@ -51,6 +35,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
     <script src="../scripts/config.js"></script>
+    <script src="../scripts/header.js"></script>
     <script src="../scripts/dashboard.js"></script>
     <script src="../scripts/game.js"></script>
 </body>

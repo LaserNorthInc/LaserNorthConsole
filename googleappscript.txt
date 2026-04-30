@@ -129,12 +129,16 @@ function doPost(e) {
 
           availCell.setValue(currentAvail + data.qty);
           totalCell.setValue(currentTotal + data.qty);
+          availCell.setNumberFormat('0');
+          totalCell.setNumberFormat('0');
 
           if (data.notes) {
             noteCell.setValue(currentNotes ? currentNotes + ' | ' + data.notes : data.notes);
           }
         } else {
           sheet.appendRow([data.id, data.type, data.thickness, data.size, data.location, data.qty, data.qty, data.user, data.dateAdded, data.notes]);
+          var newRow = sheet.getLastRow();
+          sheet.getRange(newRow, 6, 1, 2).setNumberFormat('0');
         }
       }
     }

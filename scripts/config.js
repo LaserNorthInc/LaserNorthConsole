@@ -27,3 +27,9 @@ async function logoutUser() {
     await auth.signOut();
     window.location.href = "../index.html";
 }
+
+function toggleMobileMenu() {
+    const tabs = document.querySelector('.nav-tabs');
+    if (!tabs) return;
+    tabs.classList.toggle('active');
+}

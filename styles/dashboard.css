@@ -27,7 +27,7 @@ body {
 /* SECTION: NAVIGATION (LEFT-ALIGNED) */
 .app-nav {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between !important;
     align-items: center;
     background: var(--bg-surface);
     padding: 0 2rem;
@@ -44,8 +44,22 @@ body {
     justify-content: flex-start;
     gap: 1.5rem;
     height: 100%;
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
+}
+
+.nav-tabs {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    height: 100%;
+    min-width: 0;
+}
+
+.nav-tabs > * {
+    flex-shrink: 0;
 }
 
 .nav-brand {
@@ -58,7 +72,7 @@ body {
 
 .nav-tabs {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     justify-content: flex-start;
     gap: 0.5rem;
     height: 100%;
@@ -69,19 +83,37 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
     color: var(--text-muted);
     text-decoration: none;
     font-weight: 700;
     font-size: 0.85rem;
+    line-height: 1.1;
     text-transform: uppercase;
     border-bottom: 3px solid transparent;
     transition: 0.2s;
     min-height: 70px;
-    padding: 0 20px;
+    height: 70px;
+    padding: 0 22px;
     background: none;
     border: none;
     cursor: pointer;
+    vertical-align: middle;
     white-space: nowrap;
+}
+
+.nav-tabs > * {
+    height: 100%;
+}
+
+.dropdown {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.dropdown-btn {
+    min-width: 120px;
 }
 
 .tab:hover, .tab.active, .dropdown:hover .dropdown-btn {
@@ -128,8 +160,19 @@ body {
     color: var(--accent);
 }
 
+.dropdown-content a.active {
+    color: var(--accent);
+    background: rgba(255, 107, 0, 0.08);
+}
+
 .dropdown:hover .dropdown-content {
     display: block;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 /* Header Action Buttons (Logout & Mobile Toggle) */
@@ -250,7 +293,7 @@ td {
     text-transform: uppercase;
 }
 
-..btn-secondary {
+.btn-secondary {
     background: #333;
     color: white;
     border: none;
@@ -275,54 +318,87 @@ td {
 .btn-remove { background: var(--danger) !important; color: white !important; }
 
 .modal-use-mode-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    gap: 14px;
 }
 
 .modal-use-mode-group label {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr;
     align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
+    gap: 18px;
+    padding: 18px 20px;
     border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--bg-surface);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.02);
     color: var(--text);
     font-weight: 700;
     cursor: pointer;
-    transition: border 0.2s, background 0.2s, color 0.2s;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    min-height: 76px;
 }
 
 .modal-use-mode-group label:hover {
-    border-color: var(--accent);
+    border-color: rgba(255, 107, 0, 0.25);
+    background: rgba(255, 107, 0, 0.06);
 }
 
 .modal-use-mode-group input[type="radio"] {
     appearance: none;
-    width: 18px;
-    height: 18px;
-    min-width: 18px;
+    width: 22px;
+    height: 22px;
     border: 2px solid var(--border);
     border-radius: 50%;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.04);
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
     position: relative;
-    transition: border-color 0.2s, background 0.2s;
+}
+
+.modal-use-mode-group input[type="radio"]::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: translate(-50%, -50%) scale(0.7);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .modal-use-mode-group input[type="radio"]:checked {
     border-color: var(--accent);
-    background: var(--accent);
+    background: rgba(255, 107, 0, 0.15);
+    transform: scale(1.02);
+}
+
+.modal-use-mode-group input[type="radio"]:checked::before {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
 }
 
 .modal-use-mode-group input[type="radio"]:focus-visible {
     outline: 2px solid rgba(255, 107, 0, 0.5);
-    outline-offset: 3px;
+    outline-offset: 4px;
+}
+
+.modal-use-mode-group input[type="radio"] + span {
+    color: var(--text);
+    line-height: 1.4;
+    font-size: 0.95rem;
+}
+
+.modal-use-mode-group input[type="radio"]:checked + span {
+    color: var(--accent);
 }
 
 #modal-use-mode-note {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
+    margin-top: 6px;
 }
 
 /* SECTION: TRANSACTION MODALS */
