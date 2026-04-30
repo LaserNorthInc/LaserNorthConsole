@@ -7,6 +7,33 @@ let cachedInventory = [];
 const PAGE_MODE = document.body?.dataset.pageMode || 'full-sheet';
 const IS_CROPPER_PAGE = PAGE_MODE === 'croppers';
 
+function sanitizeInput(value) {
+    if (typeof value !== 'string') return '';
+    return value
+        .replace(/[\u0000-\u001f\u007f]/g, '')
+        .replace(/[^a-zA-Z0-9\s\-\_\.\,\/\#\(\)]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeInterface();
     if (typeof auth !== 'undefined') {
@@ -28,10 +55,13 @@ function populateDropdowns() {
     const dropdownMapping = {
         'filter-material': DATA_OPTIONS.materials,
         'new-type': DATA_OPTIONS.materials.filter(m => m !== 'All'),
+        'edit-type': DATA_OPTIONS.materials.filter(m => m !== 'All'),
         'filter-thickness': DATA_OPTIONS.thicknesses,
         'new-thickness': DATA_OPTIONS.thicknesses,
+        'edit-thickness': DATA_OPTIONS.thicknesses,
         'filter-location': DATA_OPTIONS.locations,
-        'new-location': DATA_OPTIONS.locations
+        'new-location': DATA_OPTIONS.locations,
+        'edit-location': DATA_OPTIONS.locations
     };
 
     for (const [id, options] of Object.entries(dropdownMapping)) {
@@ -66,15 +96,17 @@ async function loadInventoryData() {
 function applyFilters() {
     const thickness = document.getElementById('filter-thickness')?.value || 'All';
     const location = document.getElementById('filter-location')?.value || 'All';
+    const status = document.getElementById('filter-status')?.value || '';
     const sizeSearch = document.getElementById('filter-size')?.value?.toLowerCase() || '';
     const certSearch = document.getElementById('filter-cert')?.value?.toLowerCase() || '';
 
     const filtered = cachedInventory.filter(item => {
         const matchThick = thickness === 'All' || item.thickness === thickness;
         const matchLoc = location === 'All' || item.location === location;
+        const matchStatus = !status || ((item.reservedFor || '').trim() ? 'RESERVED' : 'AVAILABLE') === status;
         const matchSize = !sizeSearch || String(item.size || '').toLowerCase().includes(sizeSearch);
         const matchCert = !certSearch || String(item.cert || item.availableStock || '').toLowerCase().includes(certSearch);
-        return matchThick && matchLoc && matchSize && matchCert;
+        return matchThick && matchLoc && matchStatus && matchSize && matchCert;
     });
 
     renderInventoryTable(filtered);
@@ -82,9 +114,16 @@ function applyFilters() {
 
 function cleanDate(dateStr) {
     if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
+    const normalized = String(dateStr).replace(/,\s*/g, ' ');
+    const date = new Date(normalized);
     if (isNaN(date)) return dateStr;
-    return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`;
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${month}/${day}/${year} ${hours}:${minutes}:${seconds}`;
 }
 
 function renderInventoryTable(data) {
@@ -92,53 +131,95 @@ function renderInventoryTable(data) {
     if (!tableBody) return;
 
     tableBody.innerHTML = data.map(item => {
-        const cert = item.cert || item.availableStock || '';
+        const displayValue = value => escapeHtml(value || '');
+        const attrValue = value => escapeAttr(value || '');
+        const cert = displayValue(item.cert);
         const reservedFor = item.reservedFor || '';
-        const reservedDisplay = reservedFor ? reservedFor : 'AVAILABLE';
+        const reservedDisplay = displayValue(reservedFor ? reservedFor : 'AVAILABLE');
         const reservedClass = reservedFor ? 'status-reserved' : 'status-available';
         const dateAdded = cleanDate(item.dateAdded || item.dateAddedRaw || '');
-        const notes = item.notes || '';
-        const user = item.user || 'System';
+        const notes = displayValue(item.notes);
+        const user = displayValue(item.user || 'System');
         const avail = parseInt(item.availableStock) || 0;
         const total = parseInt(item.totalStock) || 0;
+        const safeIdAttr = attrValue(item.id);
+        const safeTabNameAttr = attrValue(item.tabName);
+        const safeTypeAttr = attrValue(item.type);
+        const safeThicknessAttr = attrValue(item.thickness);
+        const safeSizeAttr = attrValue(item.size);
+        const safeLocationAttr = attrValue(item.location);
+        const safeCertAttr = attrValue(item.cert);
+        const safeReservedForAttr = attrValue(reservedFor);
+        const safeUserAttr = attrValue(item.user || 'System');
+        const safeNotesAttr = attrValue(item.notes);
+        const safeDateAddedAttr = attrValue(dateAdded);
 
         if (IS_CROPPER_PAGE) {
             return `
                 <tr>
-                    <td data-label="ID">${item.id}</td>
-                    <td data-label="Type">${item.type}</td>
-                    <td data-label="Thickness">${item.thickness}</td>
-                    <td data-label="Size">${item.size}</td>
-                    <td data-label="Location">${item.location}</td>
+                    <td data-label="ID">${displayValue(item.id)}</td>
+                    <td data-label="Type">${displayValue(item.type)}</td>
+                    <td data-label="Thickness">${displayValue(item.thickness)}</td>
+                    <td data-label="Size">${displayValue(item.size)}</td>
+                    <td data-label="Location">${displayValue(item.location)}</td>
                     <td data-label="Cert">${cert}</td>
-                    <td data-label="Date Added">${dateAdded}</td>
+                    <td data-label="Date Added">${displayValue(dateAdded)}</td>
                     <td data-label="Reserved For" class="${reservedClass}">${reservedDisplay}</td>
                     <td data-label="User">${user}</td>
                     <td data-label="Notes">${notes}</td>
                     <td class="action-cell">
-                        <button onclick="openTransactionModal('use', ${item.rowNumber}, '${item.id}', '${item.tabName}', 0)" class="btn-action btn-remove">USE</button>
-                        <button onclick="openTransactionModal('reserve', ${item.rowNumber}, '${item.id}', '${item.tabName}', 0, '${reservedFor.replace(/'/g, "\\'")}')" class="btn-action btn-secondary">RESERVE</button>
-                        <button onclick="openNoteModal(${item.rowNumber}, '${item.tabName}', '${item.id}', '${notes.replace(/'/g, "\\'")}')" class="btn-action btn-secondary">NOTE</button>
+                        <button onclick="openTransactionModal('use', ${item.rowNumber}, '${safeIdAttr}', '${safeTabNameAttr}', 0)" class="btn-action btn-remove">USE</button>
+                        <button onclick="openTransactionModal('reserve', ${item.rowNumber}, '${safeIdAttr}', '${safeTabNameAttr}', 0, '${safeReservedForAttr}')" class="btn-action btn-secondary">RESERVE</button>
+                        <button onclick="openEditModal(this)" class="btn-action btn-secondary"
+                            data-row="${item.rowNumber}"
+                            data-tab="${attrValue(item.tabName)}"
+                            data-id="${attrValue(item.id)}"
+                            data-type="${safeTypeAttr}"
+                            data-thickness="${safeThicknessAttr}"
+                            data-size="${safeSizeAttr}"
+                            data-location="${safeLocationAttr}"
+                            data-cert="${safeCertAttr}"
+                            data-reserved-for="${safeReservedForAttr}"
+                            data-user="${safeUserAttr}"
+                            data-notes="${safeNotesAttr}"
+                            data-dateadded="${safeDateAddedAttr}"
+                            data-available="${avail}"
+                            data-total="${total}">EDIT</button>
                     </td>
                 </tr>`;
         }
 
         return `
             <tr>
-                <td data-label="ID">${item.id}</td>
-                <td data-label="Type">${item.type}</td>
-                <td data-label="Thickness">${item.thickness}</td>
-                <td data-label="Size">${item.size}</td>
-                <td data-label="Location">${item.location}</td>
+                <td data-label="ID">${displayValue(item.id)}</td>
+                <td data-label="Type">${displayValue(item.type)}</td>
+                <td data-label="Thickness">${displayValue(item.thickness)}</td>
+                <td data-label="Size">${displayValue(item.size)}</td>
+                <td data-label="Location">${displayValue(item.location)}</td>
+                <td data-label="Cert">${cert}</td>
                 <td data-label="Available Qty" class="qty-avail" style="color:var(--success); font-weight:800;">${avail}</td>
                 <td data-label="Total Qty" class="qty-total">${total}</td>
-                <td data-label="Date Added">${dateAdded}</td>
+                <td data-label="Date Added">${displayValue(dateAdded)}</td>
                 <td data-label="User">${user}</td>
                 <td data-label="Notes">${notes}</td>
                 <td class="action-cell">
-                    <button onclick="openTransactionModal('use', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${avail}, ${total})" class="btn-action btn-remove">USE</button>
-                    <button onclick="openTransactionModal('reserve', ${item.rowNumber}, '${item.id}', '${item.tabName}', ${avail})" class="btn-action btn-secondary">RESERVE</button>
-                    <button onclick="openNoteModal(${item.rowNumber}, '${item.tabName}', '${item.id}', '${notes.replace(/'/g, "\\'")}')" class="btn-action btn-secondary">NOTE</button>
+                    <button onclick="openTransactionModal('use', ${item.rowNumber}, '${attrValue(item.id)}', '${attrValue(item.tabName)}', ${avail}, ${total})" class="btn-action btn-remove">USE</button>
+                    <button onclick="openTransactionModal('reserve', ${item.rowNumber}, '${attrValue(item.id)}', '${attrValue(item.tabName)}', ${avail})" class="btn-action btn-secondary">RESERVE</button>
+                    <button onclick="openEditModal(this)" class="btn-action btn-secondary"
+                        data-row="${item.rowNumber}"
+                        data-tab="${attrValue(item.tabName)}"
+                        data-id="${attrValue(item.id)}"
+                        data-type="${safeTypeAttr}"
+                        data-thickness="${safeThicknessAttr}"
+                        data-size="${safeSizeAttr}"
+                        data-location="${safeLocationAttr}"
+                        data-cert="${safeCertAttr}"
+                        data-reserved-for="${safeReservedForAttr}"
+                        data-user="${safeUserAttr}"
+                        data-notes="${safeNotesAttr}"
+                        data-dateadded="${safeDateAddedAttr}"
+                        data-available="${avail}"
+                        data-total="${total}">EDIT</button>
                 </td>
             </tr>`;
     }).join('');
@@ -210,37 +291,90 @@ function closeTransactionModal() {
     document.getElementById('transaction-modal').style.display = 'none';
 }
 
-function openNoteModal(row, tab, id, currentNotes = '') {
-    const modal = document.getElementById('note-modal');
+function openEditModal(button) {
+    const data = button.dataset;
+    const modal = document.getElementById('edit-modal');
     if (!modal) return;
 
-    window.currentNoteTx = { rowNumber: row, tabName: tab };
-    document.getElementById('note-modal-title').innerText = 'Edit Notes';
-    document.getElementById('note-modal-part-id').innerText = `${tab} | ${id}`;
-    const noteInput = document.getElementById('note-modal-input');
-    noteInput.value = currentNotes || '';
-    document.getElementById('note-modal-count').innerText = `${noteInput.value.length}/50`;
-    noteInput.oninput = () => document.getElementById('note-modal-count').innerText = `${noteInput.value.length}/50`;
+    const originalUser = data.user || 'System';
+    window.currentEditTx = { rowNumber: Number(data.row), tabName: data.tab, pageMode: PAGE_MODE, originalUser };
+    document.getElementById('edit-modal-title').innerText = 'Edit Row';
+    document.getElementById('edit-modal-part-id').innerText = `${data.tab} | ${data.id}`;
+
+    document.getElementById('edit-id').value = data.id || '';
+    document.getElementById('edit-type').value = data.type || '';
+    document.getElementById('edit-thickness').value = data.thickness || '';
+    document.getElementById('edit-size').value = data.size || '';
+    document.getElementById('edit-location').value = data.location || '';
+    document.getElementById('edit-cert').value = data.cert || '';
+    const editUserEl = document.getElementById('edit-user');
+    editUserEl.value = originalUser;
+    editUserEl.readOnly = true;
+    document.getElementById('edit-date').value = data.dateadded || '';
+    document.getElementById('edit-notes').value = data.notes || '';
+    document.getElementById('edit-note-count').innerText = `${(data.notes || '').length}/50`;
+
+    const reservedForGroup = document.getElementById('edit-reserved-for-group');
+    const qtyGroup = document.getElementById('edit-qty-group');
+    const totalGroup = document.getElementById('edit-total-group');
+    const reservedForInput = document.getElementById('edit-reserved-for');
+
+    if (IS_CROPPER_PAGE) {
+        if (reservedForGroup) reservedForGroup.style.display = 'grid';
+        if (qtyGroup) qtyGroup.style.display = 'none';
+        if (totalGroup) totalGroup.style.display = 'none';
+        if (reservedForInput) reservedForInput.value = data.reservedFor || '';
+    } else {
+        if (reservedForGroup) reservedForGroup.style.display = 'none';
+        if (qtyGroup) qtyGroup.style.display = 'grid';
+        if (totalGroup) totalGroup.style.display = 'grid';
+        document.getElementById('edit-available').value = data.available || 0;
+        document.getElementById('edit-total').value = data.total || 0;
+    }
+
     modal.style.display = 'flex';
 }
 
-function closeNoteModal() {
-    const modal = document.getElementById('note-modal');
+function closeEditModal() {
+    const modal = document.getElementById('edit-modal');
     if (modal) modal.style.display = 'none';
 }
 
-async function submitNote() {
-    const { rowNumber, tabName } = window.currentNoteTx || {};
-    const noteInput = document.getElementById('note-modal-input');
-    if (!noteInput || !rowNumber || !tabName) return;
+async function submitEdit() {
+    const { rowNumber, tabName } = window.currentEditTx || {};
+    if (!rowNumber || !tabName) return;
 
-    const noteValue = noteInput.value.trim().slice(0, 50);
     const payload = {
-        action: 'updateNote',
+        action: 'updateRow',
         rowNumber,
         tabName,
-        note: noteValue
+        pageMode: PAGE_MODE,
+        id: sanitizeInput(document.getElementById('edit-id')?.value),
+        type: document.getElementById('edit-type')?.value,
+        thickness: document.getElementById('edit-thickness')?.value,
+        size: sanitizeInput(document.getElementById('edit-size')?.value),
+        location: sanitizeInput(document.getElementById('edit-location')?.value),
+        cert: sanitizeInput(document.getElementById('edit-cert')?.value),
+        user: window.currentEditTx?.originalUser || 'System',
+        dateAdded: sanitizeInput(document.getElementById('edit-date')?.value),
+        notes: sanitizeInput(document.getElementById('edit-notes')?.value).slice(0, 50)
     };
+
+    if (!payload.cert) {
+        alert('Cert # is required.');
+        return;
+    }
+
+    if (IS_CROPPER_PAGE) {
+        payload.reservedFor = sanitizeInput(document.getElementById('edit-reserved-for')?.value || '');
+    } else {
+        payload.availableQty = parseInt(document.getElementById('edit-available')?.value) || 0;
+        payload.totalQty = parseInt(document.getElementById('edit-total')?.value) || 0;
+        if (payload.availableQty > payload.totalQty) {
+            alert('Available quantity cannot exceed total quantity.');
+            return;
+        }
+    }
 
     await postTransaction(payload);
 }
@@ -251,7 +385,7 @@ async function submitTransaction() {
 
     if (IS_CROPPER_PAGE) {
         if (action === 'reserve') {
-            const rawValue = document.getElementById('modal-reserved-for-input')?.value.trim();
+            const rawValue = sanitizeInput(document.getElementById('modal-reserved-for-input')?.value || '');
             let reservedFor = 'RESERVED';
             if (rawValue) {
                 reservedFor = /^JOB\b/i.test(rawValue) ? rawValue : `JOB ${rawValue}`;
@@ -309,11 +443,17 @@ async function postTransaction(payload) {
 async function submitNewItem() {
     const type = document.getElementById('new-type')?.value;
     const thickness = document.getElementById('new-thickness')?.value;
-    const size = `${document.getElementById('new-len')?.value || ''} x ${document.getElementById('new-wid')?.value || ''}`;
-    const location = document.getElementById('new-location')?.value;
-    const notes = document.getElementById('new-notes')?.value || '';
+    const size = sanitizeInput(`${document.getElementById('new-len')?.value || ''} x ${document.getElementById('new-wid')?.value || ''}`);
+    const location = sanitizeInput(document.getElementById('new-location')?.value);
+    const notes = sanitizeInput(document.getElementById('new-notes')?.value || '');
     const user = auth?.currentUser?.email || 'System';
-    const dateAdded = new Date().toLocaleDateString('en-US');
+    const dateAdded = new Date().toLocaleString('en-US', { hour12: false });
+    const cert = sanitizeInput(document.getElementById('new-cert-add')?.value || '');
+
+    if (!cert) {
+        alert('Cert # is required.');
+        return;
+    }
 
     const payload = {
         action: 'add',
@@ -326,11 +466,11 @@ async function submitNewItem() {
         location,
         user,
         dateAdded,
-        notes
+        notes,
+        cert
     };
 
     if (IS_CROPPER_PAGE) {
-        payload.cert = document.getElementById('new-cert-add')?.value || '';
         payload.reservedFor = '';
     } else {
         payload.qty = parseInt(document.getElementById('new-qty')?.value) || 1;
@@ -347,11 +487,11 @@ function toggleForm() {
 }
 
 function resetFilters() {
-    const ids = ['filter-material', 'filter-thickness', 'filter-location', 'filter-size', 'filter-cert'];
+    const ids = ['filter-material', 'filter-thickness', 'filter-location', 'filter-status', 'filter-size', 'filter-cert'];
     ids.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
-        el.value = el.tagName === 'SELECT' ? 'All' : '';
+        el.value = el.tagName === 'SELECT' ? (id === 'filter-status' ? '' : 'All') : '';
     });
     loadInventoryData();
 }

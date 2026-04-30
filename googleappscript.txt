@@ -33,6 +33,29 @@ function doGet(e) {
               notes: row[9]
             });
           } else {
+            var cert = '';
+            var availableStock = 0;
+            var totalStock = 0;
+            var userValue = '';
+            var dateAddedValue = '';
+            var notesValue = '';
+
+            if (row.length > 9 && row[5] !== undefined && isNaN(Number(row[5])) && row[6] !== undefined) {
+              cert = row[5];
+              availableStock = parseInt(row[6]) || 0;
+              totalStock = parseInt(row[7]) || 0;
+              userValue = row[8];
+              dateAddedValue = row[9];
+              notesValue = row[10] || '';
+            } else {
+              cert = '';
+              availableStock = parseInt(row[5]) || 0;
+              totalStock = parseInt(row[6]) || 0;
+              userValue = row[7];
+              dateAddedValue = row[8];
+              notesValue = row[9] || '';
+            }
+
             combinedData.push({
               rowNumber: index + 2,
               tabName: tabName,
@@ -41,11 +64,12 @@ function doGet(e) {
               thickness: row[2],
               size: row[3],
               location: row[4],
-              availableStock: parseInt(row[5]) || 0,
-              totalStock: parseInt(row[6]) || 0,
-              user: row[7],
-              dateAdded: row[8],
-              notes: row[9]
+              cert: cert,
+              availableStock: availableStock,
+              totalStock: totalStock,
+              user: userValue,
+              dateAdded: dateAddedValue,
+              notes: notesValue
             });
           }
         }
@@ -68,7 +92,9 @@ function doPost(e) {
         var reservedCell = sheet.getRange(data.rowNumber, 8);
         reservedCell.setValue(data.reserveFor || 'Reserved');
       } else {
-        var availCell = sheet.getRange(data.rowNumber, 6);
+        var row = sheet.getRange(data.rowNumber, 1, 1, sheet.getLastColumn()).getValues()[0];
+        var hasCert = row.length > 9 && row[5] !== undefined && isNaN(Number(row[5])) && row[6] !== undefined;
+        var availCell = sheet.getRange(data.rowNumber, hasCert ? 7 : 6);
         var currentAvail = parseInt(availCell.getValue()) || 0;
         availCell.setValue(currentAvail - data.reserveQty);
       }
@@ -77,11 +103,43 @@ function doPost(e) {
       var noteCell = sheet.getRange(data.rowNumber, 10);
       noteCell.setValue(data.note || '');
     }
+    else if (data.action === "updateRow") {
+      if (data.pageMode === 'croppers') {
+        sheet.getRange(data.rowNumber, 1, 1, 10).setValues([[
+          data.id,
+          data.type,
+          data.thickness,
+          data.size,
+          data.location,
+          data.cert,
+          data.dateAdded,
+          data.reservedFor || '',
+          data.user,
+          data.notes || ''
+        ]]);
+      } else {
+        sheet.getRange(data.rowNumber, 1, 1, 11).setValues([[
+          data.id,
+          data.type,
+          data.thickness,
+          data.size,
+          data.location,
+          data.cert,
+          data.availableQty,
+          data.totalQty,
+          data.user,
+          data.dateAdded,
+          data.notes || ''
+        ]]);
+      }
+    }
     else if (data.action === "useCropper") {
       sheet.deleteRow(data.rowNumber);
     }
     else if (data.action === "useReservedQty") {
-      var totalCell = sheet.getRange(data.rowNumber, 7);
+      var row = sheet.getRange(data.rowNumber, 1, 1, sheet.getLastColumn()).getValues()[0];
+      var hasCert = row.length > 9 && row[5] !== undefined && isNaN(Number(row[5])) && row[6] !== undefined;
+      var totalCell = sheet.getRange(data.rowNumber, hasCert ? 8 : 7);
       var newTotal = (parseInt(totalCell.getValue()) || 0) - data.usedQty;
       if (newTotal <= 0) {
         sheet.deleteRow(data.rowNumber);
@@ -90,8 +148,10 @@ function doPost(e) {
       }
     }
     else if (data.action === "updateQty") {
-      var availCell = sheet.getRange(data.rowNumber, 6);
-      var totalCell = sheet.getRange(data.rowNumber, 7);
+      var row = sheet.getRange(data.rowNumber, 1, 1, sheet.getLastColumn()).getValues()[0];
+      var hasCert = row.length > 9 && row[5] !== undefined && isNaN(Number(row[5])) && row[6] !== undefined;
+      var availCell = sheet.getRange(data.rowNumber, hasCert ? 7 : 6);
+      var totalCell = sheet.getRange(data.rowNumber, hasCert ? 8 : 7);
       
       var newAvail = (parseInt(availCell.getValue()) || 0) - data.usedQty;
       var newTotal = (parseInt(totalCell.getValue()) || 0) - data.usedQty;
@@ -119,9 +179,14 @@ function doPost(e) {
         }
 
         if (existingRow) {
-          var availCell = sheet.getRange(existingRow, 6);
-          var totalCell = sheet.getRange(existingRow, 7);
-          var noteCell = sheet.getRange(existingRow, 10);
+          var currentRow = sheet.getRange(existingRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+          var hasCert = currentRow.length > 9 && currentRow[5] !== undefined && isNaN(Number(currentRow[5])) && currentRow[6] !== undefined;
+          var availIndex = hasCert ? 7 : 6;
+          var totalIndex = hasCert ? 8 : 7;
+          var noteIndex = hasCert ? 11 : 10;
+          var availCell = sheet.getRange(existingRow, availIndex);
+          var totalCell = sheet.getRange(existingRow, totalIndex);
+          var noteCell = sheet.getRange(existingRow, noteIndex);
 
           var currentAvail = parseInt(availCell.getValue()) || 0;
           var currentTotal = parseInt(totalCell.getValue()) || 0;
@@ -136,9 +201,9 @@ function doPost(e) {
             noteCell.setValue(currentNotes ? currentNotes + ' | ' + data.notes : data.notes);
           }
         } else {
-          sheet.appendRow([data.id, data.type, data.thickness, data.size, data.location, data.qty, data.qty, data.user, data.dateAdded, data.notes]);
+          sheet.appendRow([data.id, data.type, data.thickness, data.size, data.location, data.cert, data.qty, data.qty, data.user, data.dateAdded, data.notes]);
           var newRow = sheet.getLastRow();
-          sheet.getRange(newRow, 6, 1, 2).setNumberFormat('0');
+          sheet.getRange(newRow, 7, 1, 2).setNumberFormat('0');
         }
       }
     }
