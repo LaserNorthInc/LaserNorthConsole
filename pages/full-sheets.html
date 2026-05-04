@@ -12,11 +12,11 @@
     <main class="content-container">
         <div class="header-action-row">
             <h1>Full Sheet Stock</h1>
-            <button class="btn-primary" onclick="toggleForm()">+ Add New Stock</button>
+            <button class="btn-primary" onclick="toggleForm()">+ Add Full Sheets</button>
         </div>
 
         <section id="add-item-form" class="inventory-card" style="display:none; padding:20px; border-left:4px solid var(--accent);">
-            <h3 style="margin-top:0; color:var(--accent);">Log New Bulk Stock</h3>
+            <h3 style="margin-top:0; color:var(--accent);">Log New Sheet Stock</h3>
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:15px;">
                 <div>
                     <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">MATERIAL TYPE</label>
@@ -40,7 +40,7 @@
                 </div>
                 <div>
                     <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">CERT #</label>
-                    <input type="text" id="new-cert-add" placeholder="Required" required>
+                    <input type="text" id="new-cert-add" placeholder="C-XXXXXXXX" required>
                 </div>
                 <div>
                     <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">QUANTITY</label>
@@ -51,7 +51,7 @@
                     <input type="text" id="new-notes" placeholder="Optional notes...">
                 </div>
                 <div style="display:flex; align-items:flex-end;">
-                    <button class="btn-primary" style="width:100%" onclick="submitNewItem()">Submit to Sheet</button>
+                    <button class="btn-primary" style="width:100%" onclick="submitNewItem()">Submit to Inventory</button>
                 </div>
             </div>
         </section>
@@ -63,7 +63,7 @@
             <div><label>Size</label><input type="text" id="filter-size" onkeyup="applyFilters()" placeholder="Search size..."></div>
             <div><label>Cert # Search</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Cert # search..."></div>
             <div class="filter-actions">
-                <button onclick="resetFilters()" class="btn-secondary">RESET</button>
+                <button onclick="resetFilters()" class="btn-secondary">REFRESH</button>
             </div>
         </section>
 

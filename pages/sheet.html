@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cropper Remnants | LNI Console</title>
+    <title>Sheet Croppers | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
 <body data-page-mode="croppers">
@@ -11,12 +11,12 @@
 
     <main class="content-container">
         <div class="header-action-row">
-            <h1>Cropper Remnants</h1>
-            <button class="btn-primary" onclick="toggleForm()">+ Add Remnant</button>
+            <h1>Sheet Croppers</h1>
+            <button class="btn-primary" onclick="toggleForm()">+ Add Cropper</button>
         </div>
 
         <section id="add-item-form" class="inventory-card" style="display:none; padding:20px; border-left:4px solid var(--accent);">
-            <h3 style="margin-top:0; color:var(--accent);">Log New Remnant</h3>
+            <h3 style="margin-top:0; color:var(--accent);">Log New Cropper</h3>
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:15px;">
                 <div>
                     <label style="font-size:0.65rem; font-weight:800; color:var(--text-muted);">TYPE</label>
@@ -60,7 +60,7 @@
             <div><label>Size</label><input type="text" id="filter-size" onkeyup="applyFilters()" placeholder="Search size..."></div>
             <div><label>Cert #</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Search cert..."></div>
             <div class="filter-actions">
-                <button onclick="resetFilters()" class="btn-secondary">RESET</button>
+                <button onclick="resetFilters()" class="btn-secondary">REFRESH</button>
             </div>
         </section>
 
