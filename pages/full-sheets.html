@@ -62,12 +62,19 @@
             <div><label>Location</label><select id="filter-location" onchange="applyFilters()"></select></div>
             <div><label>Size</label><input type="text" id="filter-size" onkeyup="applyFilters()" placeholder="Search size..."></div>
             <div><label>Cert # Search</label><input type="text" id="filter-cert" onkeyup="applyFilters()" placeholder="Cert # search..."></div>
-            <div class="filter-actions">
-                <button onclick="resetFilters()" class="btn-secondary">REFRESH</button>
+            <div class="filter-actions" style="display:flex; gap:8px; align-items:center;">
+                <button onclick="resetFilters()" class="btn-secondary">Clear filters</button>
+                <button onclick="loadInventoryData()" class="btn-primary refresh-table">Refresh table</button>
             </div>
         </section>
 
         <div class="inventory-card">
+            <div id="table-loading" class="table-loading-overlay" style="display:none;">
+                <div class="table-loading-inner">
+                    <div class="spinner"></div>
+                    <div style="margin-left:12px; font-weight:700; color:var(--text);">Loading table…</div>
+                </div>
+            </div>
             <table>
                 <thead>
                     <tr>

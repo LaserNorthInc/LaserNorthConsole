@@ -228,6 +228,8 @@ h1 { margin: 0; font-weight: 800; letter-spacing: -0.5px; }
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
+/* ensure overlays inside cards can position correctly */
+.inventory-card { position: relative; }
 
 /* SECTION: FILTERS */
 .filter-container {
@@ -322,6 +324,45 @@ td {
     text-transform: uppercase;
 }
 
+/* tactile button press and loading inline spinner */
+.btn-primary:active, .btn-secondary:active, .btn-action:active { transform: translateY(1px) scale(0.998); }
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.08);
+    border-top-color: var(--accent);
+    animation: spin 1s linear infinite;
+}
+
+.spinner-inline {
+    display:inline-block;
+    width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.12);border-top-color:var(--accent);animation:spin 0.9s linear infinite;vertical-align:middle;margin-right:8px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Table loading overlay inside inventory card */
+.table-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(6,6,7,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+}
+.table-loading-inner {
+    display:flex;
+    align-items:center;
+    background: rgba(0,0,0,0.35);
+    padding: 12px 18px;
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+}
+
 .btn-reserve { border: 1px solid var(--accent) !important; background: transparent !important; color: var(--accent) !important; }
 .btn-remove { background: var(--danger) !important; color: white !important; }
 
@@ -403,10 +444,101 @@ td {
     color: var(--accent);
 }
 
+/* Disabled radio state: make the control look intentional and muted */
+.modal-use-mode-group input[type="radio"][disabled] {
+    border-color: rgba(157,163,174,0.35);
+    background: rgba(157,163,174,0.03);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.modal-use-mode-group input[type="radio"][disabled]::before {
+    opacity: 0;
+}
+
+.modal-use-mode-group input[type="radio"][disabled] + span {
+    color: var(--text-muted);
+    opacity: 0.85;
+}
+
+.modal-use-mode-group input[type="radio"][disabled] ~ * { cursor: not-allowed; }
+
+.modal-use-mode-group label { transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease; }
+.modal-use-mode-group input[type="radio"][disabled] + span { pointer-events: none; }
+
 #modal-use-mode-note {
     font-size: 0.82rem;
     color: var(--text-muted);
     margin-top: 6px;
+}
+
+/* Simple radio list for modal "Use Mode" (not card buttons) */
+#modal-use-mode-group {
+    /* container uses default spacing from inline styles */
+}
+#modal-use-mode-group > div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+#modal-use-mode-group label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+}
+#modal-use-mode-group label:hover { background: rgba(255,255,255,0.02); }
+
+#modal-use-mode-group input[type="radio"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    background: transparent;
+    position: relative;
+    flex: 0 0 auto;
+    cursor: pointer;
+}
+#modal-use-mode-group input[type="radio"]::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+    transition: transform 0.12s ease, opacity 0.12s ease;
+}
+#modal-use-mode-group input[type="radio"]:checked {
+    border-color: var(--accent);
+}
+#modal-use-mode-group input[type="radio"]:checked::before {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+/* Disabled variant for the simple layout */
+#modal-use-mode-group input[type="radio"][disabled] {
+    border-color: rgba(157,163,174,0.35);
+    background: transparent;
+    cursor: not-allowed;
+}
+#modal-use-mode-group input[type="radio"][disabled]::before { opacity: 0; }
+#modal-use-mode-group input[type="radio"][disabled] + span {
+    color: var(--text-muted);
+    opacity: 0.9;
+    cursor: not-allowed;
 }
 
 /* SECTION: TRANSACTION MODALS */
@@ -429,6 +561,63 @@ td {
     border: 1px solid var(--border);
     padding: 2rem;
     box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+/* Modal header / footer refinements and button polish */
+.modal-header {
+    margin-bottom: 0.6rem;
+}
+.modal-header h2 {
+    margin: 0 0 6px 0;
+    font-size: 1.25rem;
+    letter-spacing: -0.5px;
+}
+.modal-header p {
+    margin: 0;
+    font-family: monospace;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    margin-top: 1rem;
+}
+
+.modal-footer .btn-primary,
+.modal-footer .btn-secondary {
+    flex: 1 1 0;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.modal-footer .btn-primary {
+    background: linear-gradient(180deg, var(--accent), var(--accent-hover));
+    color: black;
+    border: none;
+    box-shadow: 0 8px 20px rgba(255,107,0,0.12);
+}
+.modal-footer .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(255,107,0,0.16); }
+.modal-footer .btn-primary:active { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(0,0,0,0.35); }
+
+.modal-footer .btn-secondary {
+    background: rgba(255,255,255,0.02);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+.modal-footer .btn-secondary:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.06); }
+
+/* Stack modal buttons on narrow screens for better tap targets */
+@media (max-width: 480px) {
+    .modal-card { padding: 1.25rem; max-width: 360px; }
+    .modal-footer { flex-direction: column; }
+    .modal-footer .btn-primary, .modal-footer .btn-secondary { width: 100%; }
 }
 
 /* SECTION: MOBILE ADAPTIVITY */

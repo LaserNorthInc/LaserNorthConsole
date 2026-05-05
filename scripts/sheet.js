@@ -84,12 +84,22 @@ async function loadInventoryData() {
 
     if (!spreadsheetId || typeof SHEET_CONFIG === 'undefined') return;
 
+    // show loading UI and disable refresh buttons
+    const loadingOverlay = document.getElementById('table-loading');
+    const refreshButtons = document.querySelectorAll('.refresh-table');
+    refreshButtons.forEach(b => { b.disabled = true; b.dataset.origHtml = b.innerHTML; b.innerHTML = '<span class="spinner-inline"></span>Loading...'; });
+    if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
     try {
         const response = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${spreadsheetId}&tab=${selectedTab}&pageMode=${PAGE_MODE}`);
         cachedInventory = await response.json();
         applyFilters();
     } catch (error) {
         console.error('Failed to fetch inventory:', error);
+    } finally {
+        // hide loading UI and re-enable buttons
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+        refreshButtons.forEach(b => { b.disabled = false; if (b.dataset.origHtml) { b.innerHTML = b.dataset.origHtml; delete b.dataset.origHtml; } });
     }
 }
 
