@@ -620,6 +620,44 @@ td {
     .modal-footer .btn-primary, .modal-footer .btn-secondary { width: 100%; }
 }
 
+/* Materials editor small buttons */
+.materials-item button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 800;
+    min-width: 36px;
+}
+.materials-item button.btn-small { padding: 6px 8px; font-size: 0.85rem; }
+.materials-item button:hover { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.04); }
+.materials-item button.btn-danger { border-color: var(--danger); color: white; background: var(--danger); }
+.materials-item { padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.02); }
+.materials-item + .materials-item { margin-top: 6px; }
+/* Toast notifications */
+.toast {
+    background: rgba(20,20,22,0.95);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+    font-weight: 700;
+    max-width: 320px;
+}
+.toast.info { border-left: 4px solid var(--accent); }
+.toast.success { border-left: 4px solid var(--success); }
+.toast.error { border-left: 4px solid var(--danger); }
+
+/* Confirm modal uses existing modal-overlay/modal-card styles; tweak message */
+#global-confirm .modal-card { max-width: 420px; }
+#global-confirm-message { font-size: 0.95rem; color: var(--text); margin-top: 6px; }
+
+/* Global loader center overlay */
+#global-loader { display: none; }
+
 /* SECTION: MOBILE ADAPTIVITY */
 @media (max-width: 768px) {
     .menu-toggle { display: block; }

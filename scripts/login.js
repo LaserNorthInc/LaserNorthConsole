@@ -18,7 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error(error);
             googleBtn.innerText = "Sign in with Google";
-            alert("Auth failed: " + error.message);
+            // graceful toast fallback for login page
+            (function(msg){
+                var container = document.getElementById('login-toast-container');
+                if (!container) { container = document.createElement('div'); container.id = 'login-toast-container'; container.style.position = 'fixed'; container.style.right = '20px'; container.style.bottom = '20px'; container.style.zIndex = '5000'; document.body.appendChild(container); }
+                var el = document.createElement('div'); el.className = 'toast error'; el.innerText = msg; container.appendChild(el);
+                setTimeout(function(){ el.style.opacity = '0'; setTimeout(function(){ el.remove(); },300); }, 3500);
+            })("Auth failed: " + error.message);
         }
     });
 });

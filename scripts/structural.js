@@ -35,7 +35,7 @@ async function loadAllStructural() {
                             <td data-label="Length">${len}</td>
                             <td data-label="In Stock">${qty}</td>
                             <td data-label="Action">
-                                <button class="btn-update" onclick="alert('Function coming soon')">+</button>
+                                <button class="btn-update" onclick="(window.showSmallToast?showSmallToast('Function coming soon'):alert('Function coming soon'))">+</button>
                             </td>
                         </tr>`;
                 }

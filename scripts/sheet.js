@@ -50,12 +50,63 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeInterface() {
     populateDropdowns();
 }
+async function populateDropdowns() {
+    const spreadsheetId = window.CURRENT_RESOURCE_ID;
+    // Prefer an editable materials list stored in the spreadsheet (MATERIALS sheet)
+    let localMaterials = Array.isArray(DATA_OPTIONS.materials) ? DATA_OPTIONS.materials.slice() : [];
+    try {
+        if (spreadsheetId) {
+            const matResp = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${spreadsheetId}&listMaterials=1`);
+            if (matResp.ok) {
+                const mats = await matResp.json();
+                if (Array.isArray(mats) && mats.length) {
+                    localMaterials = mats.slice();
+                }
+            }
+            // Also merge sheet tabs so types that exist as tabs are included
+            const resp = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${spreadsheetId}&listTabs=1`);
+            if (resp.ok) {
+                const tabs = await resp.json();
+                tabs.forEach(t => {
+                    if (!t) return;
+                    // ignore control sheets
+                    if (String(t).toUpperCase() === 'MATERIALS') return;
+                    if (localMaterials.indexOf(t) === -1) localMaterials.push(t);
+                });
+            }
+            // Fetch inventory for all tabs to determine which materials currently have stock
+            try {
+                const invResp = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${spreadsheetId}&tab=All&pageMode=${PAGE_MODE}`);
+                if (invResp.ok) {
+                    const inv = await invResp.json();
+                    const present = new Set();
+                    inv.forEach(item => {
+                        const type = item.type;
+                        if (!type) return;
+                        if (PAGE_MODE === 'croppers') {
+                            // For croppers, presence of a row indicates stock
+                            present.add(type);
+                        } else {
+                            const total = parseInt(item.totalStock) || 0;
+                            const avail = parseInt(item.availableStock) || 0;
+                            if (total > 0 || avail > 0) present.add(type);
+                        }
+                    });
+                    // Filter localMaterials for filter select to only include present
+                    var presentMaterials = localMaterials.filter(m => present.has(m));
+                }
+            } catch (e) {
+                console.warn('Could not fetch inventory for material presence:', e);
+            }
+        }
+    } catch (err) {
+        console.warn('Could not fetch materials/tabs:', err);
+    }
 
-function populateDropdowns() {
     const dropdownMapping = {
-        'filter-material': DATA_OPTIONS.materials,
-        'new-type': DATA_OPTIONS.materials.filter(m => m !== 'All'),
-        'edit-type': DATA_OPTIONS.materials.filter(m => m !== 'All'),
+        'filter-material': ['All'].concat(typeof presentMaterials !== 'undefined' ? presentMaterials : localMaterials),
+        'new-type': localMaterials,
+        'edit-type': localMaterials,
         'filter-thickness': DATA_OPTIONS.thicknesses,
         'new-thickness': DATA_OPTIONS.thicknesses,
         'edit-thickness': DATA_OPTIONS.thicknesses,
@@ -67,13 +118,182 @@ function populateDropdowns() {
     for (const [id, options] of Object.entries(dropdownMapping)) {
         const el = document.getElementById(id);
         if (!el) continue;
-        el.innerHTML = id.startsWith('filter') ? '<option value="All">All</option>' : '';
+        el.innerHTML = id.startsWith('filter') ? '' : '';
         options.forEach(opt => {
             const option = document.createElement('option');
             option.value = opt;
             option.textContent = opt;
             el.appendChild(option);
         });
+        // If filter select, ensure 'All' is at top
+        if (id.startsWith('filter') && el.options.length && el.options[0].value !== 'All') {
+            const allOpt = document.createElement('option'); allOpt.value = 'All'; allOpt.textContent = 'All';
+            el.insertBefore(allOpt, el.firstChild);
+        }
+    }
+}
+
+// --- Materials editor modal logic ---
+function openMaterialsModal() {
+    // Load current materials into editor array
+    window.materialsEditor = [];
+    const el = document.getElementById('new-type');
+    // prefer server-provided list if available via populateDropdowns logic; otherwise read current options
+    const readFromSelect = () => {
+        const sel = document.getElementById('new-type');
+        if (!sel) return [];
+        return Array.from(sel.options).map(o => o.value).filter(v => v && v !== 'All');
+    };
+    window.materialsEditor = readFromSelect();
+    renderMaterialsEditor();
+    const modal = document.getElementById('materials-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+// --- Global UI helpers: toast, confirm, loader ---
+function showToast(message, type = 'info', timeout = 3000) {
+    try {
+        const container = document.getElementById('global-toast');
+        if (!container) return;
+        const el = document.createElement('div');
+        el.className = 'toast ' + (type || 'info');
+        el.innerText = message;
+        container.appendChild(el);
+        setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, timeout);
+    } catch (e) { console.warn('toast failed', e); }
+}
+
+function showConfirm(message) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('global-confirm');
+        const msg = document.getElementById('global-confirm-message');
+        const ok = document.getElementById('global-confirm-ok');
+        const cancel = document.getElementById('global-confirm-cancel');
+        if (!modal || !msg || !ok || !cancel) {
+            resolve(window.confirm(message));
+            return;
+        }
+        msg.innerText = message;
+        modal.style.display = 'flex';
+        const cleanup = () => { ok.onclick = null; cancel.onclick = null; modal.style.display = 'none'; };
+        ok.onclick = () => { cleanup(); resolve(true); };
+        cancel.onclick = () => { cleanup(); resolve(false); };
+    });
+}
+
+function showLoader(show, message) {
+    const loader = document.getElementById('global-loader');
+    const msg = document.getElementById('global-loader-msg');
+    if (!loader) return;
+    if (typeof message !== 'undefined' && msg) msg.innerText = message || 'Working…';
+    loader.style.display = show ? 'flex' : 'none';
+}
+
+function closeMaterialsModal() {
+    const modal = document.getElementById('materials-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function renderMaterialsEditor() {
+    const list = document.getElementById('materials-list');
+    if (!list) return;
+    list.innerHTML = '';
+    (window.materialsEditor || []).forEach((m, i) => {
+        const item = document.createElement('div');
+        item.className = 'materials-item';
+        item.style.display = 'flex';
+        item.style.gap = '8px';
+        item.style.alignItems = 'center';
+        item.innerHTML = `<div style="flex:1">${escapeHtml(m)}</div>`;
+        const up = document.createElement('button'); up.textContent = '▲'; up.className = 'btn-small';
+        up.onclick = () => { moveMaterial(i, -1); };
+        const down = document.createElement('button'); down.textContent = '▼'; down.className = 'btn-small';
+        down.onclick = () => { moveMaterial(i, 1); };
+        const del = document.createElement('button'); del.textContent = '✕'; del.className = 'btn-danger btn-small';
+        del.onclick = () => { removeMaterial(i); };
+        item.appendChild(up); item.appendChild(down); item.appendChild(del);
+        list.appendChild(item);
+    });
+}
+
+function addMaterialEditor() {
+    const val = (document.getElementById('materials-new-input')?.value || '').trim();
+    if (!val) return;
+    if (!window.materialsEditor) window.materialsEditor = [];
+    if (window.materialsEditor.indexOf(val) !== -1) {
+        showToast('Material already exists', 'error');
+        return;
+    }
+    window.materialsEditor.push(val);
+    document.getElementById('materials-new-input').value = '';
+    renderMaterialsEditor();
+}
+
+function moveMaterial(index, dir) {
+    const arr = window.materialsEditor || [];
+    const to = index + dir;
+    if (to < 0 || to >= arr.length) return;
+    const tmp = arr[to]; arr[to] = arr[index]; arr[index] = tmp;
+    renderMaterialsEditor();
+}
+
+async function removeMaterial(index) {
+    if (!window.materialsEditor) return;
+    const name = window.materialsEditor[index];
+    const ok = await showConfirm(`Remove material type "${name}"? This cannot be undone.`);
+    if (!ok) return;
+    window.materialsEditor.splice(index,1);
+    renderMaterialsEditor();
+}
+
+async function saveMaterialsEditor() {
+    const materials = window.materialsEditor || [];
+    try {
+        showLoader(true, 'Saving materials...');
+        const payload = { action: 'saveMaterials', sheetId: window.CURRENT_RESOURCE_ID, materials };
+        const resp = await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const res = await resp.json();
+        showLoader(false);
+        if (res && res.result === 'success') {
+            await populateDropdowns();
+            closeMaterialsModal();
+            showToast('Materials saved.', 'success');
+        } else {
+            showToast('Failed to save materials.', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showLoader(false);
+        showToast('Error saving materials.', 'error');
+    }
+}
+
+// Prompt + create a new material type (creates a tab on the spreadsheet)
+function createMaterialPrompt() {
+    // fallback - open materials modal for editing
+    openMaterialsModal();
+}
+
+async function createMaterialType(typeName) {
+    try {
+        showLoader(true, 'Creating material type...');
+        const payload = { action: 'createTab', sheetId: window.CURRENT_RESOURCE_ID, tabName: typeName, pageMode: PAGE_MODE };
+        const resp = await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await resp.json();
+            showLoader(false);
+            if (result && result.result === 'success') {
+                await populateDropdowns();
+                const filterEl = document.getElementById('filter-material');
+                if (filterEl) { try { filterEl.value = typeName; } catch (e) {} }
+                try { loadInventoryData(); } catch (e) {}
+                showToast(`Material type "${typeName}" created.`, 'success');
+            } else {
+                showToast('Failed to create material type.', 'error');
+            }
+    } catch (err) {
+        console.error(err);
+        showLoader(false);
+        showToast('Error creating material type.', 'error');
     }
 }
 
@@ -371,7 +591,7 @@ async function submitEdit() {
     };
 
     if (!payload.cert) {
-        alert('Cert # is required.');
+        showToast('Cert # is required.', 'error');
         return;
     }
 
@@ -381,7 +601,7 @@ async function submitEdit() {
         payload.availableQty = parseInt(document.getElementById('edit-available')?.value) || 0;
         payload.totalQty = parseInt(document.getElementById('edit-total')?.value) || 0;
         if (payload.availableQty > payload.totalQty) {
-            alert('Available quantity cannot exceed total quantity.');
+            showToast('Available quantity cannot exceed total quantity.', 'error');
             return;
         }
     }
@@ -412,7 +632,7 @@ async function submitTransaction() {
 
         if (action === 'reserve') {
             if (qtyVal > availQty) {
-                alert(`ERROR: Cannot reserve ${qtyVal} units. Only ${availQty} available.`);
+                    showToast(`ERROR: Cannot reserve ${qtyVal} units. Only ${availQty} available.`, 'error');
                 return;
             }
             payload.action = 'reserve';
@@ -421,14 +641,14 @@ async function submitTransaction() {
             const selectedUseMode = document.querySelector('input[name="modal-use-mode"]:checked')?.value || 'nonReserved';
             if (selectedUseMode === 'reserved') {
                 if (qtyVal > reservedQty) {
-                    alert(`ERROR: Cannot use ${qtyVal} reserved units. Only ${reservedQty} reserved.`);
+                    showToast(`ERROR: Cannot use ${qtyVal} reserved units. Only ${reservedQty} reserved.`, 'error');
                     return;
                 }
                 payload.action = 'useReservedQty';
                 payload.usedQty = qtyVal;
             } else {
                 if (qtyVal > availQty) {
-                    alert(`ERROR: Cannot use ${qtyVal} units from non-reserved stock. Only ${availQty} available.`);
+                    showToast(`ERROR: Cannot use ${qtyVal} units from non-reserved stock. Only ${availQty} available.`, 'error');
                     return;
                 }
                 payload.action = 'updateQty';
@@ -443,9 +663,13 @@ async function submitTransaction() {
 async function postTransaction(payload) {
     payload.sheetId = window.CURRENT_RESOURCE_ID;
     try {
+        showLoader(true, 'Processing...');
         await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        // success -> reload
         location.reload();
     } catch (error) {
+        showLoader(false);
+        showToast('Error processing transaction.', 'error');
         location.reload();
     }
 }
@@ -461,7 +685,7 @@ async function submitNewItem() {
     const cert = sanitizeInput(document.getElementById('new-cert-add')?.value || '');
 
     if (!cert) {
-        alert('Cert # is required.');
+        showToast('Cert # is required.', 'error');
         return;
     }
 

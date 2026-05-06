@@ -51,7 +51,7 @@
                                 <td data-label="Size">${size}</td>
                                 <td data-label="Length">${len}</td>
                                 <td data-label="Stock">${qty}</td>
-                                <td data-label="Actions"><button class="btn-update">+</button></td>
+                                <td data-label="Actions"><button class="btn-update" onclick="showSmallToast('Function coming soon')">+</button></td>
                             </tr>`;
                     });
                 } catch(e) {
@@ -64,5 +64,13 @@
         // Only load inventory after Firebase confirms the user is logged in.
         auth.onAuthStateChanged(user => user && loadInventory());
     </script>
+        <script>
+            function showSmallToast(msg) {
+                var container = document.getElementById('struct-toast-container');
+                if (!container) { container = document.createElement('div'); container.id = 'struct-toast-container'; container.style.position = 'fixed'; container.style.right = '20px'; container.style.bottom = '20px'; container.style.zIndex = '5000'; document.body.appendChild(container); }
+                var el = document.createElement('div'); el.className = 'toast info'; el.innerText = msg; container.appendChild(el);
+                setTimeout(function(){ el.style.opacity = '0'; setTimeout(function(){ el.remove(); },300); }, 2500);
+            }
+        </script>
 </body>
 </html>
