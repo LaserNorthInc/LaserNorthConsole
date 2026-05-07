@@ -3,23 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Help | LNI Console</title>
+    <title>Documentation | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
+    <style>
+        .help-section {
+            padding: 25px;
+        }
+        .help-section h2 {
+            color: var(--accent);
+            text-transform: uppercase;
+            font-size: 1.1rem;
+            margin-top: 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .step-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .step-list li {
+            position: relative;
+            padding-left: 35px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: var(--text);
+        }
+        .step-list li::before {
+            content: attr(data-step);
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 22px;
+            height: 22px;
+            background: var(--border);
+            color: var(--accent);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 900;
+        }
+        .command-highlight {
+            color: var(--success);
+            font-family: monospace;
+            font-weight: 700;
+            background: rgba(0, 230, 118, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .warning-box {
+            background: rgba(255, 68, 68, 0.05);
+            border: 1px solid var(--danger);
+            padding: 15px;
+            border-radius: var(--radius);
+            margin-top: 20px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        /* New Wellness Styling */
+        .wellness-card {
+            border-left: 4px solid #00bcd4 !important; /* Calm blue accent */
+        }
+        .hr-contact-box {
+            background: rgba(0, 188, 212, 0.08);
+            border: 1px dashed #00bcd4;
+            padding: 15px;
+            border-radius: var(--radius);
+            margin-top: 15px;
+            text-align: center;
+        }
+        .hr-link {
+            color: #00bcd4;
+            text-decoration: underline;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body data-page-mode="help">
     <div id="header-placeholder"></div>
 
     <main class="content-container">
-        <h1>Help</h1>
-        <p>Welcome to the help page. Add useful documentation, FAQs, or contact info here.</p>
-        <section>
-            <h3>Quick Tips</h3>
-            <ul>
-                <li>Use the "Sheets" menu to switch between Full Sheet and Cropper stock.</li>
-                <li>Default filters are set to "All" so all items show by default.</li>
-                <li>Use the Add / Edit controls to update inventory.</li>
-            </ul>
-        </section>
+        <div class="header-action-row">
+            <h1>System Documentation</h1>
+            <span class="status-ready" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800;">LNI v2.1 Terminal Help</span>
+        </div>
+
+        <div class="info-grid">
+            <div class="inventory-card">
+                <div class="help-section">
+                    <h2>Full Sheet Inventory</h2>
+                    <ul class="step-list">
+                        <li data-step="1">Navigate to <span class="command-highlight">Sheets > Full Stock</span> to view standard material inventory.</li>
+                        <li data-step="2">Use the top filter bar to narrow results by <strong>Material Type</strong>, <strong>Thickness</strong>, or <strong>Heat Number</strong>.</li>
+                        <li data-step="3">To allocate material, click <span class="command-highlight">RESERVE</span>. This updates the status across all console instances.</li>
+                        <li data-step="4">To add new stock, use the <span class="command-highlight">+ Add Sheet</span> button. Ensure the Heat Number matches the physical MTR.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="inventory-card">
+                <div class="help-section">
+                    <h2>Sheet Cropper (Remnants)</h2>
+                    <ul class="step-list">
+                        <li data-step="1">Navigate to <span class="command-highlight">Sheets > Cropper</span> for partial sheet/remnant tracking.</li>
+                        <li data-step="2">Search results are primarily sorted by <strong>Dimensions</strong> to help find drops for small jobs.</li>
+                        <li data-step="3">When a remnant is used, click <span class="command-highlight">REMOVE</span> to delete it from the cloud database.</li>
+                        <li data-step="4">When adding a crop, input exact <strong>Width x Length</strong> measurements in inches.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="inventory-card">
+                <div class="help-section">
+                    <h2>General System Operations</h2>
+                    <h3 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Cloud Syncing</h3>
+                    <p style="font-size: 0.9rem; margin-bottom: 15px;">The console uses a <strong>real-time background sync</strong>. Changes are pushed to the master Google Sheet automatically. Check the status indicator in the top header to ensure you are <span class="status-ready">ONLINE</span>.</p>
+                    
+                    <h3 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Cross-Machine Usage</h3>
+                    <p style="font-size: 0.9rem;">The console is web-based. Always refresh (<kbd>F5</kbd>) if the terminal has been idle to ensure the local cache matches the master database.</p>
+
+                    <div class="warning-box">
+                        <strong style="color: var(--danger); font-size: 0.8rem; text-transform: uppercase; display: block; margin-bottom: 5px;">System Warning</strong>
+                        <p style="margin: 0; font-size: 0.85rem;">Do not manually edit the Google Sheets while the console is open to avoid data overwrites.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="inventory-card wellness-card">
+                <div class="help-section">
+                    <h2 style="color: #00bcd4; border-bottom-color: rgba(0, 188, 212, 0.3);">Operator Wellness & Support</h2>
+                    
+                    <h3 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Managing Shop Stress</h3>
+                    <p style="font-size: 0.9rem; margin-bottom: 10px;">High-output environments can be taxing. Utilize these coping mechanisms:</p>
+                    <ul style="font-size: 0.85rem; color: var(--text); padding-left: 20px; line-height: 1.6;">
+                        <li><strong>Tactical Breathing:</strong> 4 seconds in, 4 seconds hold, 4 seconds out to reset the nervous system.</li>
+                        <li><strong>Micro-Breaks:</strong> Step away from the screen or machine for 60 seconds every hour.</li>
+                        <li><strong>Task Triaging:</strong> Focus only on the immediate next cut or entry if the queue feels overwhelming.</li>
+                    </ul>
+
+                    <div class="hr-contact-box">
+                        <p style="margin: 0; font-size: 0.9rem; font-weight: 700; color: #00bcd4;">Need to Talk?</p>
+                        <p style="margin: 5px 0 10px 0; font-size: 0.8rem;">Mental health is just as critical as shop safety. Our HR representatives are available for confidential support regarding anxiety, burnout, or personal stress.</p>
+                        <p style="margin: 0; font-size: 0.85rem;"><strong>Recommendation:</strong> Contact your <span class="hr-link">HR Representative</span> immediately if you feel overwhelmed or need resources.</p>
+                    </div>
+                    
+                    <p style="margin-top: 15px; font-size: 0.8rem; font-style: italic; color: var(--text-muted);">LNI values your well-being. Don't hesitate to seek support; talking to HR is a proactive step for your health and your career.</p>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script src="../scripts/config.js"></script>

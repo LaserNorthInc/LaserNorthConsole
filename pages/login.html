@@ -3,24 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | LNI Console</title>
-    <!-- Shared dashboard styling plus login-specific layout styles -->
+    <title>Secure Access | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
-    <link rel="stylesheet" href="../styles/login.css">
+    <style>
+        /* Centering the login card on the full viewport */
+        body.login-layout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-deep);
+            /* Subtle blueprint grid background */
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        #login-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-top: 4px solid var(--accent);
+            padding: 40px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        #login-container::before {
+            content: "SECURE TERMINAL V2.1";
+            position: absolute;
+            top: -25px;
+            left: 0;
+            font-family: monospace;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+        }
+
+        .brand-logo {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--accent);
+            margin: 0;
+            letter-spacing: -2px;
+        }
+
+        .brand-sub {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 3px;
+            margin-bottom: 40px;
+        }
+
+        #google-signin-btn {
+            width: 100%;
+            background: #ffffff;
+            color: #000;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #google-signin-btn:hover {
+            background: #f1f1f1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.2);
+        }
+
+        #google-signin-btn:active {
+            transform: translateY(0);
+        }
+
+        .security-note {
+            margin-top: 30px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            line-height: 1.5;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+    </style>
 </head>
 <body class="login-layout">
-    <!-- Login card with a single Google Sign-In button -->
+    
     <div id="login-container">
-        <h1 style="color:var(--accent); margin-bottom:0;">LNI</h1>
-        <p style="color:var(--text-muted); margin-top:5px; font-size:0.8rem;">INVENTORY CONSOLE</p>
+        <h1 class="brand-logo">LNI</h1>
+        <p class="brand-sub">Inventory Console</p>
         
         <button id="google-signin-btn">
-            <img src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_64dp.png" width="18">
-            SIGN IN WITH GOOGLE
+            <img src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_64dp.png" width="18" alt="Google">
+            Sign In With Workspace
         </button>
+
+        <div class="security-note">
+            Authorized Personnel Only<br>
+            Access is logged and monitored.
+        </div>
     </div>
 
-    <!-- Firebase scripts for authentication and shared app config -->
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
     <script src="../scripts/config.js"></script>

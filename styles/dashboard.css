@@ -733,3 +733,24 @@ td {
         padding-top: 15px;
     }
 }
+
+/* Add to existing dashboard.css if not present */
+.btn-remove { 
+    background: var(--danger) !important; 
+    color: white !important; 
+    opacity: 0.7;
+}
+.btn-remove:hover { opacity: 1; }
+
+.id-cell {
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Ensure filter container doesn't squash on mobile */
+@media (max-width: 480px) {
+    .filter-container {
+        grid-template-columns: 1fr;
+    }
+}

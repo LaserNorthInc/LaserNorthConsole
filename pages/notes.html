@@ -5,28 +5,369 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notes | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
+    <style>
+        #notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .note-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .note-container.active-editing {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(255, 107, 0, 0.15);
+        }
+
+        .note-header {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cat-label {
+            color: var(--accent);
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.75rem;
+        }
+
+        .note-body { position: relative; background: #0a0a0b; }
+
+        .note-editor {
+            width: 100%;
+            min-height: 100px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 20px;
+            padding-bottom: 60px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            resize: none;
+            outline: none;
+            box-sizing: border-box;
+            display: block;
+            overflow: hidden;
+            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            cursor: default;
+        }
+
+        .note-editor:not([readonly]) {
+            color: var(--text);
+            cursor: text;
+        }
+
+        .btn-internal-save {
+            display: none;
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            background: var(--success) !important;
+            color: #000 !important;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 800;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .active-editing .btn-internal-save { display: block; }
+
+        /* Stylized Toast Notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast-msg {
+            background: var(--bg-surface);
+            border-left: 4px solid var(--accent);
+            color: var(--text);
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .toast-success { border-left-color: var(--success); }
+        .toast-error { border-left-color: var(--danger); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .sync-status { font-size: 0.7rem; text-transform: uppercase; font-weight: 800; margin-right: 10px; }
+        .status-online { color: var(--success); }
+        .status-offline { color: var(--danger); }
+
+        /* Input styling for modals */
+        .modal-input {
+            width: 100%;
+            background: #0a0a0b;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 10px;
+            outline: none;
+        }
+        .modal-input:focus { border-color: var(--accent); }
+    </style>
 </head>
 <body data-page-mode="notes">
     <div id="header-placeholder"></div>
+    <div id="toast-container"></div>
 
     <main class="content-container">
-        <h1>Notes</h1>
-        <p>This is a placeholder notes page. Add notes or instructions here.</p>
-        <section>
-            <textarea id="notes-area" style="width:100%;min-height:300px;" placeholder="Write notes here..."></textarea>
-            <div style="margin-top:12px;"><button id="save-notes" class="btn-action">Save Notes</button></div>
-        </section>
+        <div class="header-action-row">
+            <div>
+                <h1>Industrial Notes</h1>
+                <p id="cloud-status" class="sync-status status-offline">Initializing...</p>
+            </div>
+            <div class="header-actions">
+                <button id="add-note-btn" class="btn-primary">+ New Category</button>
+            </div>
+        </div>
+
+        <div class="inventory-card">
+            <div class="filter-container">
+                <div>
+                    <label>Filter by Category</label>
+                    <select id="filter-category">
+                        <option value="all">SHOW ALL</option>
+                    </select>
+                </div>
+                <div style="text-align: right;">
+                    <button id="save-all" class="btn-primary" style="background: var(--success);">Force Cloud Sync</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="notes-list"></div>
     </main>
+
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Confirm Deletion</h2>
+                <p>System removal in progress.</p>
+            </div>
+            <div id="confirm-msg" style="margin: 15px 0; color: var(--text-muted); font-size: 0.9rem;"></div>
+            <div class="modal-footer">
+                <button onclick="closeModal('confirm-modal')" class="btn-secondary">Abort</button>
+                <button id="confirm-exec" class="btn-primary" style="background: var(--danger);">Delete Entry</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>New Entry</h2>
+                <p>Registering new data category.</p>
+            </div>
+            <input type="text" id="new-cat-input" class="modal-input" placeholder="Enter Category Name...">
+            <div class="modal-footer">
+                <button onclick="closeModal('add-modal')" class="btn-secondary">Cancel</button>
+                <button id="add-exec" class="btn-primary">Initialize</button>
+            </div>
+        </div>
+    </div>
 
     <script src="../scripts/config.js"></script>
     <script src="../scripts/header.js"></script>
     <script>
-        document.getElementById('save-notes')?.addEventListener('click', () => {
-            const v = document.getElementById('notes-area')?.value || '';
-            try { localStorage.setItem('lni_notes_v1', v); alert('Notes saved locally.'); } catch (e) { alert('Save failed.'); }
+        const SCRIPT_URL = "https://script.google.com/a/macros/lasernorthinc.com/s/AKfycbwmxQZoV48TC4Zgtq9AgC85NuCoA4m5S_FHkZTrNqHR0SAdnoMZNbzJZKo2jvEYHhE/exec";
+        let notesData = [];
+        let pendingDeleteId = null;
+
+        const list = document.getElementById('notes-list');
+        const filterSelect = document.getElementById('filter-category');
+        const statusEl = document.getElementById('cloud-status');
+
+        function showToast(text, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast-msg toast-${type}`;
+            toast.innerText = text;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        async function loadNotes() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                notesData = await response.json();
+                statusEl.innerText = "Cloud Synced";
+                statusEl.className = "sync-status status-online";
+                renderNotes();
+            } catch (e) {
+                statusEl.innerText = "Connection Error";
+                statusEl.className = "sync-status status-offline";
+                const local = localStorage.getItem('lni_notes_v2');
+                if (local) notesData = JSON.parse(local);
+                renderNotes();
+            }
+        }
+
+        function autoExpand(field) {
+            field.style.height = 'inherit';
+            field.style.height = field.scrollHeight + 'px';
+        }
+
+        function renderNotes() {
+            list.innerHTML = '';
+            const filter = filterSelect.value;
+            const categories = [...new Set(notesData.map(n => n.category))];
+            filterSelect.innerHTML = '<option value="all">SHOW ALL</option>' + 
+                categories.map(c => `<option value="${c}" ${filter === c ? 'selected' : ''}>${c.toUpperCase()}</option>`).join('');
+
+            notesData.forEach(note => {
+                if (filter !== 'all' && note.category !== filter) return;
+                const container = document.createElement('div');
+                container.className = 'note-container';
+                container.id = `container-${note.id}`;
+                container.innerHTML = `
+                    <div class="note-header">
+                        <span class="cat-label">${note.category}</span>
+                        <div class="header-btn-group">
+                            <button class="btn-action btn-modify" onclick="unlockNote(${note.id})">Modify Entry</button>
+                            <button class="btn-action btn-remove" onclick="promptDelete(${note.id})">Delete</button>
+                        </div>
+                    </div>
+                    <div class="note-body">
+                        <textarea class="note-editor" id="editor-${note.id}" data-id="${note.id}" 
+                            readonly placeholder="Entry Locked.">${note.content}</textarea>
+                        <button class="btn-internal-save" onclick="lockNote(${note.id})">Save Changes</button>
+                    </div>
+                `;
+                list.appendChild(container);
+                autoExpand(document.getElementById(`editor-${note.id}`));
+            });
+        }
+
+        window.unlockNote = (id) => {
+            const editor = document.getElementById(`editor-${id}`);
+            const container = document.getElementById(`container-${id}`);
+            if (editor) {
+                editor.readOnly = false;
+                container.classList.add('active-editing');
+                editor.focus();
+                const val = editor.value; editor.value = ''; editor.value = val;
+                editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
+
+        window.lockNote = (id) => {
+            const editor = document.getElementById(`editor-${id}`);
+            const container = document.getElementById(`container-${id}`);
+            if (editor) {
+                editor.readOnly = true;
+                container.classList.remove('active-editing');
+                autoSync();
+                showToast("Entry Saved & Synced", "success");
+            }
+        };
+
+        // STYLIZED ADD
+        document.getElementById('add-note-btn').onclick = () => {
+            document.getElementById('new-cat-input').value = '';
+            openModal('add-modal');
+            document.getElementById('new-cat-input').focus();
+        };
+
+        document.getElementById('add-exec').onclick = () => {
+            const cat = document.getElementById('new-cat-input').value.trim();
+            if (cat) {
+                notesData.push({ id: Date.now(), category: cat, content: '' });
+                renderNotes();
+                autoSync();
+                closeModal('add-modal');
+                showToast(`Category "${cat}" Created`, "success");
+            }
+        };
+
+        // STYLIZED DELETE
+        window.promptDelete = (id) => {
+            const note = notesData.find(n => n.id === id);
+            pendingDeleteId = id;
+            document.getElementById('confirm-msg').innerText = `Are you sure you want to delete category: "${note.category}"?`;
+            openModal('confirm-modal');
+        };
+
+        document.getElementById('confirm-exec').onclick = () => {
+            notesData = notesData.filter(n => n.id !== pendingDeleteId);
+            closeModal('confirm-modal');
+            renderNotes();
+            autoSync();
+            showToast("Entry Deleted", "success");
+        };
+
+        async function autoSync() {
+            statusEl.innerText = "Syncing...";
+            localStorage.setItem('lni_notes_v2', JSON.stringify(notesData));
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(notesData)
+                });
+                statusEl.innerText = "Cloud Synced";
+                statusEl.className = "sync-status status-online";
+            } catch (e) {
+                statusEl.innerText = "Sync Failed";
+                showToast("Sync Error", "error");
+            }
+        }
+
+        list.addEventListener('input', (e) => {
+            if (e.target.classList.contains('note-editor') && !e.target.readOnly) {
+                const id = parseInt(e.target.dataset.id);
+                const note = notesData.find(n => n.id === id);
+                if (note) note.content = e.target.value;
+                autoExpand(e.target);
+            }
         });
-        // Load existing notes
-        try { const existing = localStorage.getItem('lni_notes_v1'); if (existing) document.getElementById('notes-area').value = existing; } catch(e){}
+
+        filterSelect.addEventListener('change', renderNotes);
+        document.getElementById('save-all').onclick = autoSync;
+        window.addEventListener('DOMContentLoaded', loadNotes);
     </script>
 </body>
 </html>

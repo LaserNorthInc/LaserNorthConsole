@@ -5,29 +5,187 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
+    <style>
+        .welcome-banner {
+            background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-deep) 100%);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            padding: 40px;
+            border-radius: var(--radius);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Subtle industrial watermark effect */
+        .welcome-banner::after {
+            content: "LNI-SYS-2.1";
+            position: absolute;
+            right: 20px;
+            bottom: 10px;
+            font-family: monospace;
+            font-size: 3rem;
+            font-weight: 900;
+            color: rgba(255, 107, 0, 0.03);
+            pointer-events: none;
+        }
+
+        .welcome-banner h1 { 
+            font-size: 2.2rem; 
+            margin-bottom: 10px; 
+            letter-spacing: -1px;
+        }
+        
+        .welcome-banner p { 
+            color: var(--text-muted); 
+            margin: 0; 
+            font-weight: 600; 
+            max-width: 600px;
+            line-height: 1.5;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .nav-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 30px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 200px;
+        }
+
+        .nav-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            background: rgba(255, 107, 0, 0.03);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .nav-card h3 {
+            color: var(--accent);
+            margin: 0 0 12px 0;
+            text-transform: uppercase;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .nav-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin: 0 0 25px 0;
+        }
+
+        .nav-action {
+            font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 1px;
+        }
+
+        .nav-action::after {
+            content: "→";
+            transition: transform 0.2s ease;
+        }
+
+        .nav-card:hover .nav-action {
+            color: var(--accent);
+        }
+
+        .nav-card:hover .nav-action::after {
+            transform: translateX(8px);
+        }
+
+        .system-status-footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+    </style>
 </head>
-<body>
+<body data-page-mode="dashboard">
     <div id="header-placeholder"></div>
 
     <main class="content-container">
-        <h1>Overview</h1>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom: 30px;">
-            <div class="inventory-card" style="padding:20px; border-top: 4px solid var(--accent);">
-                <h3 style="margin-top:0; color:var(--text-muted);">STRUCTURAL STOCK</h3>
-                <p id="struct-count" style="font-size:2rem; font-weight:800; color:var(--accent);">...</p>
-            </div>
-            <div class="inventory-card" style="padding:20px; border-top: 4px solid var(--accent);">
-                <h3 style="margin-top:0; color:var(--text-muted);">SHEET STOCK</h3>
-                <p id="sheet-count" style="font-size:2rem; font-weight:800; color:var(--accent);">...</p>
-            </div>
+        
+        <section class="welcome-banner">
+            <h1>LNI CENTRAL CONSOLE</h1>
+            <p>Welcome to the Laser North industrial terminal. Use the modules below to track material flow, manage remnant stock, and access team documentation.</p>
+        </section>
+
+        <div class="nav-grid">
+            
+            <a href="full-sheets.html" class="nav-card">
+                <div>
+                    <h3>Full Stock Inventory</h3>
+                    <p>Standard material management. View thickness, heat numbers, and current allocations for raw sheet and structural stock.</p>
+                </div>
+                <span class="nav-action">Initialize Terminal</span>
+            </a>
+
+            <a href="sheet.html" class="nav-card">
+                <div>
+                    <h3>Remnant Cropper</h3>
+                    <p>Drop management system. Search and log partial sheet remnants by dimension to maximize material yield.</p>
+                </div>
+                <span class="nav-action">Access Drops</span>
+            </a>
+
+            <a href="notes.html" class="nav-card">
+                <div>
+                    <h3>Console Notes</h3>
+                    <p>Internal communication hub. Sync category-based instructions and project updates across all shop machines.</p>
+                </div>
+                <span class="nav-action">View Notes</span>
+            </a>
+
+            <a href="help.html" class="nav-card">
+                <div>
+                    <h3>System Documentation</h3>
+                    <p>Access operational manuals, inventory protocols, and console troubleshooting guides.</p>
+                </div>
+                <span class="nav-action">Get Help</span>
+            </a>
+
+                        <a href="https://www.betterhelp.com/get-started/?go=true&utm_content=133524759310&utm_source=AdWords&utm_medium=Search_PPC_c&utm_term=betterhelp_b&network=g&placement=&target=&matchtype=b&utm_campaign=15234220559&ad_type=text&adposition=&kwd_id=kwd-299033048821&gad_source=1&gad_campaignid=15234220559&gbraid=0AAAAADqBHia4qSoCShZ07XhQ43lHXqXsK&gclid=Cj0KCQjw8PDPBhCeARIsAOJwmWXvwHg3Q5SLz2l2nKEY2sb2AimipMrGEklPUEDAivrUT5F18ElIkkoaApQxEALw_wcB&not_found=1&gor=start" class="nav-card">
+                <div>
+                    <h3>Even More Help</h3>
+                    <p>BetterHelp will match you to one of 32,000 licensed therapists based upon your location, preferences, and therapist availability.</p>
+                </div>
+                <span class="nav-action">Get Better Help</span>
+            </a>
+
         </div>
 
+        <footer class="system-status-footer">
+            <span>Terminal Identity: SHOP-MAIN-01</span>
+            <span>Version 2.1 // Industrial Mode Active</span>
+        </footer>
 
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    </main>
+
     <script src="../scripts/config.js"></script>
     <script src="../scripts/header.js"></script>
-    <script src="../scripts/dashboard.js"></script>
-</body>
+    </body>
 </html>
