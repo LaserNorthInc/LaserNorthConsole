@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes | LNI Console</title>
+    <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body data-page-mode="notes">
+    <div id="header-placeholder"></div>
+
+    <main class="content-container">
+        <h1>Notes</h1>
+        <p>This is a placeholder notes page. Add notes or instructions here.</p>
+        <section>
+            <textarea id="notes-area" style="width:100%;min-height:300px;" placeholder="Write notes here..."></textarea>
+            <div style="margin-top:12px;"><button id="save-notes" class="btn-action">Save Notes</button></div>
+        </section>
+    </main>
+
+    <script src="../scripts/config.js"></script>
+    <script src="../scripts/header.js"></script>
+    <script>
+        document.getElementById('save-notes')?.addEventListener('click', () => {
+            const v = document.getElementById('notes-area')?.value || '';
+            try { localStorage.setItem('lni_notes_v1', v); alert('Notes saved locally.'); } catch (e) { alert('Save failed.'); }
+        });
+        // Load existing notes
+        try { const existing = localStorage.getItem('lni_notes_v1'); if (existing) document.getElementById('notes-area').value = existing; } catch(e){}
+    </script>
+</body>
+</html>

@@ -7,6 +7,8 @@ async function loadSharedHeader() {
         if (!response.ok) throw new Error('Unable to load shared header');
         placeholder.innerHTML = await response.text();
         activateSharedHeader();
+            // Signal that shared header is loaded; sheet scripts can react to this
+            try { window._sharedHeaderLoaded = Date.now(); if (window.indexSheetData) window.indexSheetData(); } catch(e){}
     } catch (error) {
         console.error('Header load failed:', error);
     }

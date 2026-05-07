@@ -6,6 +6,68 @@
 let cachedInventory = [];
 const PAGE_MODE = document.body?.dataset.pageMode || 'full-sheet';
 const IS_CROPPER_PAGE = PAGE_MODE === 'croppers';
+const INDEX_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+function _getIndexCacheKey(sheetId, pageMode) {
+    return `lni_index_${sheetId || 'global'}_${pageMode || PAGE_MODE}`;
+}
+
+function _readIndexCache(sheetId) {
+    try {
+        const key = _getIndexCacheKey(sheetId);
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.ts || !Array.isArray(parsed.data)) return null;
+        return parsed;
+    } catch (e) { return null; }
+}
+
+function _writeIndexCache(sheetId, data) {
+    try {
+        const key = _getIndexCacheKey(sheetId);
+        localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
+    } catch (e) { /* ignore */ }
+}
+
+async function fetchIndexAndCache(sheetId) {
+    if (!sheetId || typeof SHEET_CONFIG === 'undefined') return null;
+    try {
+        const resp = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${sheetId}&tab=All&pageMode=${PAGE_MODE}`);
+        if (!resp.ok) return null;
+        const inv = await resp.json();
+        if (Array.isArray(inv)) {
+            _writeIndexCache(sheetId, inv);
+            return inv;
+        }
+    } catch (e) { console.warn('fetchIndexAndCache failed', e); }
+    return null;
+}
+
+// Public: index the sheet and cache inventory for faster initial renders
+async function indexSheetData(force = false) {
+    const sheetId = window.CURRENT_RESOURCE_ID;
+    if (!sheetId || typeof SHEET_CONFIG === 'undefined') return;
+    try {
+        const cached = _readIndexCache(sheetId);
+        if (cached && !force && (Date.now() - cached.ts) < INDEX_CACHE_TTL) {
+            cachedInventory = cached.data.slice();
+            try { applyFilters(); } catch (e) {}
+            // still refresh in background
+            fetchIndexAndCache(sheetId).then((fresh) => { if (fresh) { cachedInventory = fresh; try { applyFilters(); } catch (e){} } });
+            return;
+        }
+
+        const fresh = await fetchIndexAndCache(sheetId);
+        if (fresh) {
+            cachedInventory = fresh.slice();
+            try { applyFilters(); } catch (e) {}
+        }
+    } catch (e) { console.warn('indexSheetData failed', e); }
+}
+
+// expose for header to call early
+try { window.indexSheetData = indexSheetData; } catch (e) {}
 
 function sanitizeInput(value) {
     if (typeof value !== 'string') return '';
@@ -34,8 +96,8 @@ function escapeAttr(value) {
         .replace(/>/g, '&gt;');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initializeInterface();
+document.addEventListener('DOMContentLoaded', async () => {
+    await initializeInterface();
     if (typeof auth !== 'undefined') {
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -47,8 +109,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function initializeInterface() {
-    populateDropdowns();
+async function initializeInterface() {
+    await populateDropdowns();
+    // Ensure default filter selections are explicit 'All' when available
+    ['filter-material', 'filter-thickness', 'filter-location'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        try {
+            if (el.tagName === 'SELECT') {
+                if (Array.from(el.options).some(o => o.value === 'All')) {
+                    el.value = 'All';
+                } else if (el.options.length) {
+                    el.selectedIndex = 0;
+                }
+            }
+        } catch (e) { /* ignore */ }
+    });
 }
 async function populateDropdowns() {
     const spreadsheetId = window.CURRENT_RESOURCE_ID;
@@ -76,15 +152,24 @@ async function populateDropdowns() {
             }
             // Fetch inventory for all tabs to determine which materials currently have stock
             try {
-                const invResp = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${spreadsheetId}&tab=All&pageMode=${PAGE_MODE}`);
-                if (invResp.ok) {
-                    const inv = await invResp.json();
+                // Use cached index if available to speed up dropdown population
+                const cached = _readIndexCache(spreadsheetId);
+                let inv = null;
+                if (cached && (Date.now() - cached.ts) < INDEX_CACHE_TTL) {
+                    inv = cached.data.slice();
+                } else {
+                    const invResp = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${spreadsheetId}&tab=All&pageMode=${PAGE_MODE}`);
+                    if (invResp.ok) {
+                        inv = await invResp.json();
+                        if (Array.isArray(inv)) _writeIndexCache(spreadsheetId, inv);
+                    }
+                }
+                if (Array.isArray(inv)) {
                     const present = new Set();
                     inv.forEach(item => {
                         const type = item.type;
                         if (!type) return;
                         if (PAGE_MODE === 'croppers') {
-                            // For croppers, presence of a row indicates stock
                             present.add(type);
                         } else {
                             const total = parseInt(item.totalStock) || 0;
@@ -92,8 +177,9 @@ async function populateDropdowns() {
                             if (total > 0 || avail > 0) present.add(type);
                         }
                     });
-                    // Filter localMaterials for filter select to only include present
                     var presentMaterials = localMaterials.filter(m => present.has(m));
+                    // populate cachedInventory so initial render can use this data
+                    cachedInventory = inv.slice();
                 }
             } catch (e) {
                 console.warn('Could not fetch inventory for material presence:', e);
@@ -300,9 +386,19 @@ async function createMaterialType(typeName) {
 async function loadInventoryData() {
     const spreadsheetId = window.CURRENT_RESOURCE_ID;
     const materialSelect = document.getElementById('filter-material');
-    const selectedTab = materialSelect ? materialSelect.value : 'All';
+    const selectedTab = (materialSelect && materialSelect.value) ? materialSelect.value : 'All';
 
     if (!spreadsheetId || typeof SHEET_CONFIG === 'undefined') return;
+
+    // If we have a recent cached index, show it immediately for faster first paint
+    try {
+        const cached = _readIndexCache(spreadsheetId);
+        if (cached && (Date.now() - cached.ts) < INDEX_CACHE_TTL) {
+            cachedInventory = cached.data.slice();
+            try { applyFilters(); } catch (e) {}
+            // continue to fetch fresh data in background and update when ready
+        }
+    } catch (e) { /* ignore cache errors */ }
 
     // show loading UI and disable refresh buttons
     const loadingOverlay = document.getElementById('table-loading');
@@ -664,13 +760,31 @@ async function postTransaction(payload) {
     payload.sheetId = window.CURRENT_RESOURCE_ID;
     try {
         showLoader(true, 'Processing...');
-        await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-        // success -> reload
-        location.reload();
+        const resp = await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        if (!resp.ok) throw new Error('Server returned error');
+        // Refresh in-place: update dropdowns and reload inventory without full page reload
+        try {
+            await populateDropdowns();
+        } catch (e) { console.warn('populateDropdowns after post failed', e); }
+        // If this was an 'add' action, reset filters to show all by default
+        try {
+            if (payload && payload.action === 'add') {
+                try { resetFilters(); } catch (e) { console.warn('resetFilters failed', e); }
+            } else {
+                try { await loadInventoryData(); } catch (e) { console.warn('loadInventoryData after post failed', e); }
+            }
+        } catch (e) { console.warn('postTransaction refresh handling failed', e); }
+        // close modals and hide loader
+        try { closeTransactionModal(); } catch (e) {}
+        try { closeEditModal(); } catch (e) {}
+        showLoader(false);
+        showToast('Transaction processed.', 'success');
     } catch (error) {
         showLoader(false);
         showToast('Error processing transaction.', 'error');
-        location.reload();
+        console.error('postTransaction error', error);
+        // fallback: reload to ensure UI isn't stale
+        try { location.reload(); } catch (e) {}
     }
 }
 
