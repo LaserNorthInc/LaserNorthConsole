@@ -6,20 +6,27 @@
     <title>Secure Access | LNI Console</title>
     <link rel="stylesheet" href="../styles/dashboard.css">
     <style>
-        /* Centering the login card on the full viewport */
         body.login-layout {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            /* Positioning the card higher on the screen */
+            justify-content: flex-start; 
             min-height: 100vh;
             margin: 0;
             padding: 0;
             background-color: var(--bg-deep);
-            /* Subtle blueprint grid background */
+            /* Industrial Blueprint Grid */
             background-image: 
                 linear-gradient(var(--border) 1px, transparent 1px),
                 linear-gradient(90deg, var(--border) 1px, transparent 1px);
             background-size: 50px 50px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Buffer to push the container down from the very top, but keep it high */
+        .top-buffer {
+            height: 15vh;
         }
 
         #login-container {
@@ -27,16 +34,17 @@
             border: 1px solid var(--border);
             border-top: 4px solid var(--accent);
             padding: 40px;
-            width: 100%;
-            max-width: 360px;
+            width: 90%;
+            max-width: 380px;
             text-align: center;
             border-radius: var(--radius);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
             position: relative;
         }
 
+        /* Subtle terminal label */
         #login-container::before {
-            content: "SECURE TERMINAL V2.1";
+            content: "LNI TERMINAL ACCESS";
             position: absolute;
             top: -25px;
             left: 0;
@@ -47,11 +55,12 @@
         }
 
         .brand-logo {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 900;
             color: var(--accent);
             margin: 0;
-            letter-spacing: -2px;
+            letter-spacing: -3px;
+            line-height: 1;
         }
 
         .brand-sub {
@@ -59,8 +68,8 @@
             font-size: 0.75rem;
             text-transform: uppercase;
             font-weight: 800;
-            letter-spacing: 3px;
-            margin-bottom: 40px;
+            letter-spacing: 4px;
+            margin: 10px 0 40px 0;
         }
 
         #google-signin-btn {
@@ -68,55 +77,52 @@
             background: #ffffff;
             color: #000;
             border: none;
-            padding: 12px;
+            padding: 14px;
             border-radius: 4px;
-            font-weight: 800;
-            font-size: 0.8rem;
+            font-weight: 900;
+            font-size: 0.85rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
-            transition: transform 0.1s, box-shadow 0.1s;
+            transition: all 0.2s ease;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         #google-signin-btn:hover {
             background: #f1f1f1;
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.2);
+            box-shadow: 0 5px 20px rgba(255, 107, 0, 0.3);
         }
 
-        #google-signin-btn:active {
-            transform: translateY(0);
-        }
-
-        .security-note {
+        .security-footer {
             margin-top: 30px;
             font-size: 0.65rem;
             color: var(--text-muted);
+            line-height: 1.8;
             text-transform: uppercase;
-            line-height: 1.5;
             border-top: 1px solid var(--border);
             padding-top: 20px;
         }
     </style>
 </head>
 <body class="login-layout">
+
+    <div class="top-buffer"></div>
     
     <div id="login-container">
         <h1 class="brand-logo">LNI</h1>
         <p class="brand-sub">Inventory Console</p>
         
         <button id="google-signin-btn">
-            <img src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_64dp.png" width="18" alt="Google">
-            Sign In With Workspace
+            <img src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_64dp.png" width="20" alt="G">
+            Sign In with Workspace
         </button>
 
-        <div class="security-note">
+        <div class="security-footer">
             Authorized Personnel Only<br>
-            Access is logged and monitored.
+            System Access is Logged and Monitored
         </div>
     </div>
 
