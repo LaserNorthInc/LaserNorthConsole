@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts Terminal | LNI Console</title>
+    <link rel="stylesheet" href="../styles/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="data:,">
+    <style>
+        /* Unique Archive Styling */
+        .view-toggle-row {
+            display: flex;
+            gap: 2px;
+            background: var(--border);
+            padding: 2px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            width: fit-content;
+        }
+
+        .view-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 20px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: var(--bg-surface);
+            color: var(--accent);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        /* Archive Timeline Style */
+        .timeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            border-left: 2px solid var(--border);
+            margin-left: 10px;
+            padding-left: 30px;
+        }
+
+        .timeline-item {
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -41px;
+            top: 24px;
+            width: 20px;
+            height: 2px;
+            background: var(--border);
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -45px;
+            top: 21px;
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .archive-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.7rem;
+            font-family: monospace;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.2);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .archive-label {
+            background: var(--border);
+            color: var(--text);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.6rem;
+        }
+
+        #new-alert-info {
+            width: 100%; background: #0a0a0b; color: white; border: 1px solid var(--border);
+            padding: 12px; border-radius: 6px; font-size: 0.9rem; margin-top: 5px; outline: none;
+        }
+    </style>
+</head>
+<body data-page-mode="alerts">
+    <div id="header-placeholder"></div>
+
+    <main class="content-container">
+        <div class="header-action-row">
+            <div>
+                <h1>System Broadcasts</h1>
+                <p id="user-display" style="font-size:0.7rem; color:var(--text-muted); font-family:monospace; margin-top:5px;">TERMINAL READY</p>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button class="btn-primary" onclick="toggleAlertForm()">+ Broadcast</button>
+                <div style="background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+                    <i class="fas fa-bell" style="color: var(--accent);"></i>
+                    <span id="badge-count" style="margin-left: 8px; font-weight: 900; color: var(--danger); display: none;">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="view-toggle-row">
+            <button id="btn-active" class="view-btn active" onclick="switchView('active')">Active Terminal</button>
+            <button id="btn-archive" class="view-btn" onclick="switchView('archive')">System Archive</button>
+        </div>
+
+        <section id="add-alert-form" class="inventory-card" style="display:none; padding:20px; border-left:4px solid var(--accent); margin-bottom:20px;">
+            <h3 style="margin:0; color:var(--accent); font-size: 0.8rem; text-transform: uppercase;">Initialize System-Wide Broadcast</h3>
+            <textarea id="new-alert-info" rows="3" placeholder="Enter notification parameters..."></textarea>
+            <div style="display:flex; gap:10px; justify-content: flex-end; margin-top: 15px;">
+                <button class="btn-secondary" onclick="toggleAlertForm()">Cancel</button>
+                <button class="btn-primary" onclick="submitNewAlert()">Sync Broadcast</button>
+            </div>
+        </section>
+
+        <div id="active-view">
+            <div class="inventory-card">
+                <table id="active-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Origin</th>
+                            <th>Information</th>
+                            <th>Acknowledged By</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alert-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="archive-view" style="display: none;">
+            <div id="archive-list" class="timeline-container">
+                </div>
+        </div>
+
+        <div id="table-loading" class="table-loading-overlay" style="display:none;">
+            <div class="table-loading-inner"><div class="spinner"></div></div>
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+    <script src="../scripts/config.js"></script>
+    <script src="../scripts/header.js"></script>
+    
+    <script>
+        const SCRIPT_URL = "https://script.google.com/a/macros/lasernorthinc.com/s/AKfycbxGlEAwHEDnFy0L7Hs06Eh3hoMaLHBOnPBJsoX-8KVWQA2d4Hz14Las4YevxkP68NykFw/exec";
+        let currentMode = 'active';
+
+        function toggleAlertForm() {
+            const form = document.getElementById('add-alert-form');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function switchView(mode) {
+            currentMode = mode;
+            document.getElementById('btn-active').classList.toggle('active', mode === 'active');
+            document.getElementById('btn-archive').classList.toggle('active', mode === 'archive');
+            document.getElementById('active-view').style.display = mode === 'active' ? 'block' : 'none';
+            document.getElementById('archive-view').style.display = mode === 'archive' ? 'block' : 'none';
+            fetchAlerts();
+        }
+
+        function fetchAlerts() {
+            document.getElementById('table-loading').style.display = 'flex';
+            const script = document.createElement('script');
+            // Requesting different action based on view
+            const action = currentMode === 'active' ? 'getAlerts' : 'getArchive';
+            script.src = `${SCRIPT_URL}?action=${action}&callback=handleData`;
+            document.body.appendChild(script);
+        }
+
+        function handleData(data) {
+            document.getElementById('table-loading').style.display = 'none';
+            document.getElementById('user-display').innerText = `ID: ${data.userEmail.split('@')[0].toUpperCase()}`;
+            
+            if (currentMode === 'active') renderActive(data.alerts);
+            else renderArchive(data.archive);
+        }
+
+        function renderActive(alerts) {
+            const tbody = document.getElementById('alert-table-body');
+            const badge = document.getElementById('badge-count');
+            tbody.innerHTML = '';
+            badge.innerText = alerts.length;
+            badge.style.display = alerts.length > 0 ? 'inline' : 'none';
+
+            alerts.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-family:monospace; color:var(--accent);">#${a.id.toString().slice(-4)}</td>
+                    <td style="font-weight:bold;">${a.createdBy}</td>
+                    <td style="font-size:0.85rem;">${a.info}</td>
+                    <td style="font-size:0.7rem; color:var(--text-muted);">${a.acknowledgedBy.join(', ') || '---'}</td>
+                    <td><button class="btn-primary" onclick="executeAck('${a.id}')">ACK</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderArchive(archive) {
+            const container = document.getElementById('archive-list');
+            container.innerHTML = '';
+
+            archive.forEach(a => {
+                const div = document.createElement('div');
+                div.className = 'timeline-item';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span style="font-family:monospace; color:var(--accent); font-weight:bold;">DATA_LOG #${a.id.toString().slice(-4)}</span>
+                        <span style="font-size:0.7rem; color:var(--text-muted); font-weight:bold;">${a.date}</span>
+                    </div>
+                    <div style="font-size:0.95rem; color:#e4e4e7;">${a.info}</div>
+                    <div class="archive-meta">
+                        <span><span class="archive-label">ORIGIN</span> ${a.createdBy}</span>
+                        <span><span class="archive-label">VERIFIED BY</span> ${a.acknowledgedBy.join(', ')}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function executeAck(id) {
+            document.getElementById('table-loading').style.display = 'flex';
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action: "acknowledge", alertId: id })
+            });
+            setTimeout(fetchAlerts, 800);
+        }
+
+        async function submitNewAlert() {
+            const info = document.getElementById('new-alert-info').value;
+            if(!info) return;
+            document.getElementById('table-loading').style.display = 'flex';
+            await fetch(SCRIPT_URL, {
+                method: 'POST', mode: 'no-cors',
+                body: JSON.stringify({ action: "createAlert", info: info })
+            });
+            document.getElementById('new-alert-info').value = '';
+            toggleAlertForm();
+            setTimeout(fetchAlerts, 800);
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchAlerts);
+    </script>
+</body>
+</html>
