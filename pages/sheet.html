@@ -148,8 +148,9 @@
                 <div style="display:grid; gap:6px;"><label style="font-size:0.7rem; font-weight:800; color:var(--text-muted);">Date Added</label><input type="text" id="edit-date" placeholder="MM/DD/YYYY, HH:MM:SS"></div>
                 <div style="display:grid; gap:6px;"><label style="font-size:0.7rem; font-weight:800; color:var(--text-muted);">User (read-only)</label><input type="text" id="edit-user" readonly></div>
                 <div style="display:grid; gap:6px;"><label style="font-size:0.7rem; font-weight:800; color:var(--text-muted);">Notes (max 50 chars)</label><textarea id="edit-notes" maxlength="50" rows="4" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border); background: #0a0a0b; color: var(--text); resize:none;"></textarea><div id="edit-note-count" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:right;">0/50</div></div>
+                <div id="edit-min-stock-group" style="display:none; gap:6px;"><label style="font-size:0.7rem; font-weight:800; color:var(--text-muted);">Minimum Stock Alert</label><input type="number" id="edit-min-stock" min="0" placeholder="0 for no alert"></div>
             </div>
-            <div class="modal-footer" style="display:flex; gap:10px;"><button class="btn-primary" style="flex:1" onclick="submitEdit()">Save</button><button class="btn-secondary" style="flex:1" onclick="closeEditModal()">Cancel</button></div>
+            <div class="modal-footer" style="display:flex; gap:10px;"><button class="btn-primary" style="flex:1" onclick="submitEdit()">Save</button><button class="btn-secondary" style="flex:1" onclick="viewEditHistory()">View History</button><button class="btn-secondary" style="flex:1" onclick="closeEditModal()">Cancel</button></div>
         </div>
     </div>
 
@@ -160,6 +161,20 @@
     <script src="../scripts/constants.js"></script>
     <script src="../scripts/sheet.js"></script>
     <script>window.CURRENT_RESOURCE_ID = SHEET_CONFIG.IDS.CROPPER_SHEET;</script>
+    <div id="history-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-card" style="max-width:800px; width:100%; max-height:80vh; overflow-y:auto;">
+            <div class="modal-header">
+                <h2 id="history-modal-title" style="margin:0; color:var(--accent);">Edit History</h2>
+                <p id="history-modal-id" style="font-family:monospace; color:var(--text-muted);"></p>
+            </div>
+            <div id="history-list" style="padding:12px; display:flex; flex-direction:column; gap:8px; max-height:60vh; overflow-y:auto;">
+                <div style="color:var(--text-muted);">Loading history...</div>
+            </div>
+            <div class="modal-footer" style="display:flex; gap:10px;">
+                <button class="btn-secondary" style="flex:1" onclick="closeHistoryModal()">Close</button>
+            </div>
+        </div>
+    </div>
     <div id="materials-modal" class="modal-overlay" style="display:none;">
         <div class="modal-card" style="max-width:640px; width:100%;">
             <div class="modal-header"><h2 style="margin:0; color:var(--accent);">Edit Material Types</h2><p style="color:var(--text-muted);">Add, remove or reorder materials used in dropdowns</p></div>

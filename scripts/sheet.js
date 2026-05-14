@@ -468,6 +468,7 @@ function renderInventoryTable(data) {
         const user = displayValue(item.user || 'System');
         const avail = parseInt(item.availableStock) || 0;
         const total = parseInt(item.totalStock) || 0;
+        const minStock = parseInt(item.minStock) || 0;
         const safeIdAttr = attrValue(item.id);
         const safeTabNameAttr = attrValue(item.tabName);
         const safeTypeAttr = attrValue(item.type);
@@ -479,6 +480,25 @@ function renderInventoryTable(data) {
         const safeUserAttr = attrValue(item.user || 'System');
         const safeNotesAttr = attrValue(item.notes);
         const safeDateAddedAttr = attrValue(dateAdded);
+
+        // Determine stock status for full-sheet page
+        let stockStatus = '';
+        let stockStatusClass = 'stock-ok';
+        if (minStock > 0) {
+            if (avail <= 0) {
+                stockStatus = 'OUT OF STOCK';
+                stockStatusClass = 'stock-critical';
+            } else if (avail < minStock) {
+                stockStatus = 'LOW STOCK';
+                stockStatusClass = 'stock-critical';
+            } else if (avail < minStock * 1.5) {
+                stockStatus = 'APPROACHING MIN';
+                stockStatusClass = 'stock-warning';
+            } else {
+                stockStatus = 'OK';
+                stockStatusClass = 'stock-ok';
+            }
+        }
 
         if (IS_CROPPER_PAGE) {
             return `
@@ -525,6 +545,7 @@ function renderInventoryTable(data) {
                 <td data-label="Cert">${cert}</td>
                 <td data-label="Available Qty" class="qty-avail" style="color:var(--success); font-weight:800;">${avail}</td>
                 <td data-label="Total Qty" class="qty-total">${total}</td>
+                <td data-label="Stock Status">${minStock > 0 ? `<span class="stock-status ${stockStatusClass}">${stockStatus}</span>` : '<span style="color:var(--text-muted);">N/A</span>'}</td>
                 <td data-label="Date Added">${displayValue(dateAdded)}</td>
                 <td data-label="User">${user}</td>
                 <td data-label="Notes">${notes}</td>
@@ -545,7 +566,8 @@ function renderInventoryTable(data) {
                         data-notes="${safeNotesAttr}"
                         data-dateadded="${safeDateAddedAttr}"
                         data-available="${avail}"
-                        data-total="${total}">EDIT</button>
+                        data-total="${total}"
+                        data-minstock="${minStock}">EDIT</button>
                 </td>
             </tr>`;
     }).join('');
@@ -623,7 +645,7 @@ function openEditModal(button) {
     if (!modal) return;
 
     const originalUser = data.user || 'System';
-    window.currentEditTx = { rowNumber: Number(data.row), tabName: data.tab, pageMode: PAGE_MODE, originalUser };
+    window.currentEditTx = { rowNumber: Number(data.row), tabName: data.tab, pageMode: PAGE_MODE, originalUser, id: data.id };
     document.getElementById('edit-modal-title').innerText = 'Edit Row';
     document.getElementById('edit-modal-part-id').innerText = `${data.tab} | ${data.id}`;
 
@@ -640,22 +662,29 @@ function openEditModal(button) {
     document.getElementById('edit-notes').value = data.notes || '';
     document.getElementById('edit-note-count').innerText = `${(data.notes || '').length}/50`;
 
+    const minStockGroup = document.getElementById('edit-min-stock-group');
     const reservedForGroup = document.getElementById('edit-reserved-for-group');
     const qtyGroup = document.getElementById('edit-qty-group');
     const totalGroup = document.getElementById('edit-total-group');
     const reservedForInput = document.getElementById('edit-reserved-for');
 
     if (IS_CROPPER_PAGE) {
+        if (minStockGroup) minStockGroup.style.display = 'none';
         if (reservedForGroup) reservedForGroup.style.display = 'grid';
         if (qtyGroup) qtyGroup.style.display = 'none';
         if (totalGroup) totalGroup.style.display = 'none';
         if (reservedForInput) reservedForInput.value = data.reservedFor || '';
     } else {
+        if (minStockGroup) minStockGroup.style.display = 'grid';
         if (reservedForGroup) reservedForGroup.style.display = 'none';
         if (qtyGroup) qtyGroup.style.display = 'grid';
         if (totalGroup) totalGroup.style.display = 'grid';
-        document.getElementById('edit-available').value = data.available || 0;
-        document.getElementById('edit-total').value = data.total || 0;
+        const editAvailEl = document.getElementById('edit-available');
+        const editTotalEl = document.getElementById('edit-total');
+        const editMinEl = document.getElementById('edit-min-stock');
+        if (editAvailEl) editAvailEl.value = data.available || 0;
+        if (editTotalEl) editTotalEl.value = data.total || 0;
+        if (editMinEl) editMinEl.value = data.minstock || 0;
     }
 
     modal.style.display = 'flex';
@@ -666,8 +695,66 @@ function closeEditModal() {
     if (modal) modal.style.display = 'none';
 }
 
+function closeHistoryModal() {
+    const modal = document.getElementById('history-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function viewEditHistory() {
+    const { id, tabName } = window.currentEditTx || {};
+    if (!id || !tabName) return;
+    
+    const modal = document.getElementById('history-modal');
+    const historyList = document.getElementById('history-list');
+    if (!modal || !historyList) return;
+
+    document.getElementById('history-modal-title').innerText = 'Edit History';
+    document.getElementById('history-modal-id').innerText = `${tabName} | ${id}`;
+    historyList.innerHTML = '<div style="color:var(--text-muted);">Loading history...</div>';
+    modal.style.display = 'flex';
+
+    try {
+        const resp = await fetch(`${SHEET_CONFIG.SCRIPT_URL}?id=${window.CURRENT_RESOURCE_ID}&getHistory=1&itemId=${encodeURIComponent(id)}&tabName=${encodeURIComponent(tabName)}`);
+        if (!resp.ok) throw new Error('Failed to fetch history');
+        const history = await resp.json();
+
+        if (!Array.isArray(history) || history.length === 0) {
+            historyList.innerHTML = '<div style="color:var(--text-muted); padding:12px; text-align:center;">No edit history yet</div>';
+            return;
+        }
+
+        historyList.innerHTML = '';
+        history.forEach(entry => {
+            const item = document.createElement('div');
+            item.style.cssText = 'padding:10px; border:1px solid var(--border); border-radius:6px; background:#0a0a0b; font-size:0.85rem;';
+            const timestamp = entry.timestamp || 'Unknown';
+            const field = entry.field || 'unknown';
+            const oldVal = escapeHtml(String(entry.oldValue || ''));
+            const newVal = escapeHtml(String(entry.newValue || ''));
+            const changedBy = entry.changedBy || 'System';
+            
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <span style="color:var(--accent); font-weight:700;">${field}</span>
+                    <span style="color:var(--text-muted); font-size:0.75rem;">${timestamp}</span>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span style="color:var(--text-muted);">${oldVal || '(empty)'}</span>
+                    <span style="color:var(--accent); font-weight:700;">→</span>
+                    <span style="color:#22c55e;">${newVal || '(empty)'}</span>
+                </div>
+                <div style="margin-top:6px; color:var(--text-muted); font-size:0.75rem;">By: ${changedBy}</div>
+            `;
+            historyList.appendChild(item);
+        });
+    } catch (err) {
+        console.error('Error fetching history:', err);
+        historyList.innerHTML = '<div style="color:#ef4444; padding:12px;">Error loading history</div>';
+    }
+}
+
 async function submitEdit() {
-    const { rowNumber, tabName } = window.currentEditTx || {};
+    const { rowNumber, tabName, id } = window.currentEditTx || {};
     if (!rowNumber || !tabName) return;
 
     const payload = {
@@ -675,6 +762,7 @@ async function submitEdit() {
         rowNumber,
         tabName,
         pageMode: PAGE_MODE,
+        sheetId: window.CURRENT_RESOURCE_ID,
         id: sanitizeInput(document.getElementById('edit-id')?.value),
         type: document.getElementById('edit-type')?.value,
         thickness: document.getElementById('edit-thickness')?.value,
@@ -696,12 +784,14 @@ async function submitEdit() {
     } else {
         payload.availableQty = parseInt(document.getElementById('edit-available')?.value) || 0;
         payload.totalQty = parseInt(document.getElementById('edit-total')?.value) || 0;
+        payload.minStock = parseInt(document.getElementById('edit-min-stock')?.value) || 0;
         if (payload.availableQty > payload.totalQty) {
             showToast('Available quantity cannot exceed total quantity.', 'error');
             return;
         }
     }
 
+    console.log('submitEdit payload:', payload);
     await postTransaction(payload);
 }
 
@@ -760,6 +850,7 @@ async function postTransaction(payload) {
     payload.sheetId = window.CURRENT_RESOURCE_ID;
     try {
         showLoader(true, 'Processing...');
+        console.log('Sending POST payload:', JSON.stringify(payload));
         const resp = await fetch(SHEET_CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         if (!resp.ok) throw new Error('Server returned error');
         // Refresh in-place: update dropdowns and reload inventory without full page reload

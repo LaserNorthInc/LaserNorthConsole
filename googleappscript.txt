@@ -1,9 +1,84 @@
-/**
- * LNI CONSOLE BACKEND - v11 (Direct Available Stock Management)
+`/**
+ * LNI CONSOLE BACKEND - v12 (Edit History + Minimum Stock)
  */
+
+// Helper: Ensure HISTORY sheet exists with headers
+function getOrCreateHistorySheet(ss) {
+  var sheet = ss.getSheetByName('HISTORY');
+  if (!sheet) {
+    sheet = ss.insertSheet('HISTORY');
+    sheet.appendRow(['Timestamp', 'Item ID', 'Tab Name', 'Field', 'Old Value', 'New Value', 'Changed By']);
+  }
+  return sheet;
+}
+
+// Helper: Ensure MIN_STOCK sheet exists with headers
+function getOrCreateMinStockSheet(ss) {
+  var sheet = ss.getSheetByName('MIN_STOCK');
+  if (!sheet) {
+    sheet = ss.insertSheet('MIN_STOCK');
+    sheet.appendRow(['Item ID', 'Tab Name', 'Minimum Stock', 'Last Updated']);
+  }
+  return sheet;
+}
+
+// Helper: Log a change to history
+function logChange(ss, itemId, tabName, field, oldValue, newValue, changedBy) {
+  var histSheet = getOrCreateHistorySheet(ss);
+  var timestamp = new Date().toLocaleString();
+  histSheet.appendRow([timestamp, itemId, tabName, field, String(oldValue), String(newValue), changedBy || 'System']);
+}
+
+// Helper: Get minimum stock for an item
+function getMinimumStock(ss, itemId, tabName) {
+  var minSheet = ss.getSheetByName('MIN_STOCK');
+  if (!minSheet) {
+    Logger.log('getMinimumStock: MIN_STOCK sheet does not exist');
+    return 0;
+  }
+  var rows = minSheet.getDataRange().getValues();
+  Logger.log('getMinimumStock: itemId=' + itemId + ', tabName=' + tabName + ', rows.length=' + rows.length);
+  for (var i = 1; i < rows.length; i++) {
+    Logger.log('Checking row ' + (i + 1) + ': id=' + rows[i][0] + ', tab=' + rows[i][1] + ', minStock=' + rows[i][2]);
+    if (rows[i][0] === itemId && rows[i][1] === tabName) {
+      var result = parseInt(rows[i][2]) || 0;
+      Logger.log('Found minStock=' + result);
+      return result;
+    }
+  }
+  Logger.log('No matching row found, returning 0');
+  return 0;
+}
+
+// Helper: Set minimum stock for an item
+function setMinimumStock(ss, itemId, tabName, minQty) {
+  var minSheet = getOrCreateMinStockSheet(ss);
+  var rows = minSheet.getDataRange().getValues();
+  Logger.log('setMinimumStock: itemId=' + itemId + ', tabName=' + tabName + ', minQty=' + minQty + ', rows.length=' + rows.length);
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][0] === itemId && rows[i][1] === tabName) {
+      Logger.log('Found existing row at ' + (i + 1) + ', updating...');
+      minSheet.getRange(i + 1, 3, 1, 2).setValues([[minQty, new Date().toLocaleString()]]);
+      return;
+    }
+  }
+  // Not found, add new row
+  Logger.log('Row not found, appending new row...');
+  minSheet.appendRow([itemId, tabName, minQty, new Date().toLocaleString()]);
+}
+
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.openById(e.parameter.id);
+    // Debug endpoint to check MIN_STOCK sheet
+    if (e.parameter.debug === 'minstock') {
+      var minSheet = ss.getSheetByName('MIN_STOCK');
+      if (!minSheet) {
+        return ContentService.createTextOutput(JSON.stringify({error: 'MIN_STOCK sheet does not exist'})).setMimeType(ContentService.MimeType.JSON);
+      }
+      var rows = minSheet.getDataRange().getValues();
+      return ContentService.createTextOutput(JSON.stringify({found: true, rowCount: rows.length, data: rows})).setMimeType(ContentService.MimeType.JSON);
+    }
     // If caller requests sheet/tab list, return names only
     if (e.parameter.listTabs === '1') {
       var sheetNames = ss.getSheets().map(function(s) { return s.getName(); });
@@ -20,12 +95,39 @@ function doGet(e) {
       if (values.length && String(values[0]).toLowerCase().indexOf('material') !== -1) values.shift();
       return ContentService.createTextOutput(JSON.stringify(values)).setMimeType(ContentService.MimeType.JSON);
     }
+    // Get edit history for an item
+    if (e.parameter.getHistory === '1') {
+      var histSheet = ss.getSheetByName('HISTORY');
+      if (!histSheet) {
+        return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+      }
+      var itemId = e.parameter.itemId;
+      var tabName = e.parameter.tabName;
+      var rows = histSheet.getDataRange().getValues();
+      var history = [];
+      rows.shift(); // skip header
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i][1] === itemId && rows[i][2] === tabName) {
+          history.push({
+            timestamp: rows[i][0],
+            field: rows[i][3],
+            oldValue: rows[i][4],
+            newValue: rows[i][5],
+            changedBy: rows[i][6]
+          });
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify(history.reverse())).setMimeType(ContentService.MimeType.JSON);
+    }
     var targetTab = e.parameter.tab;
     var pageMode = e.parameter.pageMode || 'full-sheet';
     var combinedData = [];
     var sheets = (targetTab === 'All') ? ss.getSheets() : [ss.getSheetByName(targetTab)];
-    // Exclude internal control sheets like MATERIALS from inventory exports
-    sheets = sheets.filter(function(s) { return s && String(s.getName()).toUpperCase() !== 'MATERIALS'; });
+    // Exclude internal control sheets like MATERIALS, HISTORY, MIN_STOCK from inventory exports
+    sheets = sheets.filter(function(s) { 
+      var name = s && String(s.getName()).toUpperCase();
+      return s && name !== 'MATERIALS' && name !== 'HISTORY' && name !== 'MIN_STOCK'; 
+    });
 
     sheets.forEach(function(sheet) {
       if (!sheet) return;
@@ -36,10 +138,12 @@ function doGet(e) {
       rows.forEach(function(row, index) {
         if (row[0]) {
           if (pageMode === 'croppers') {
+            var itemId = row[0];
+            var minStock = getMinimumStock(ss, itemId, tabName);
             combinedData.push({
               rowNumber: index + 2,
               tabName: tabName,
-              id: row[0],
+              id: itemId,
               type: row[1],
               thickness: row[2],
               size: row[3],
@@ -48,7 +152,8 @@ function doGet(e) {
               dateAdded: row[6],
               reservedFor: row[7],
               user: row[8],
-              notes: row[9]
+              notes: row[9],
+              minStock: minStock
             });
           } else {
             var cert = '';
@@ -74,10 +179,12 @@ function doGet(e) {
               notesValue = row[9] || '';
             }
 
+            var itemId = row[0];
+            var minStock = getMinimumStock(ss, itemId, tabName);
             combinedData.push({
               rowNumber: index + 2,
               tabName: tabName,
-              id: row[0],
+              id: itemId,
               type: row[1],
               thickness: row[2],
               size: row[3],
@@ -87,7 +194,8 @@ function doGet(e) {
               totalStock: totalStock,
               user: userValue,
               dateAdded: dateAddedValue,
-              notes: notesValue
+              notes: notesValue,
+              minStock: minStock
             });
           }
         }
@@ -122,61 +230,81 @@ function doPost(e) {
     if (data.action === "reserve") {
       if (data.pageMode === 'croppers') {
         var reservedCell = sheet.getRange(data.rowNumber, 8);
-        reservedCell.setValue(data.reserveFor || 'Reserved');
+        var oldValue = reservedCell.getValue();
+        var newValue = data.reserveFor || 'Reserved';
+        reservedCell.setValue(newValue);
+        logChange(ss, data.id, data.tabName, 'reserved_for', oldValue, newValue, data.user);
       } else {
         var row = sheet.getRange(data.rowNumber, 1, 1, sheet.getLastColumn()).getValues()[0];
         var hasCert = row.length > 9 && row[5] !== undefined && isNaN(Number(row[5])) && row[6] !== undefined;
         var availCell = sheet.getRange(data.rowNumber, hasCert ? 7 : 6);
         var currentAvail = parseInt(availCell.getValue()) || 0;
-        availCell.setValue(currentAvail - data.reserveQty);
+        var newAvail = currentAvail - data.reserveQty;
+        availCell.setValue(newAvail);
+        logChange(ss, data.id, data.tabName, 'available_stock', currentAvail, newAvail, data.user);
       }
     }
     else if (data.action === "updateNote") {
       var noteCell = sheet.getRange(data.rowNumber, 10);
-      noteCell.setValue(data.note || '');
+      var oldValue = noteCell.getValue();
+      var newValue = data.note || '';
+      noteCell.setValue(newValue);
+      logChange(ss, data.id, data.tabName, 'notes', oldValue, newValue, data.user);
     }
     else if (data.action === "updateRow") {
+      var oldRow = sheet.getRange(data.rowNumber, 1, 1, sheet.getLastColumn()).getValues()[0];
+      
       if (data.pageMode === 'croppers') {
-        sheet.getRange(data.rowNumber, 1, 1, 10).setValues([[
-          data.id,
-          data.type,
-          data.thickness,
-          data.size,
-          data.location,
-          data.cert,
-          data.dateAdded,
-          data.reservedFor || '',
-          data.user,
-          data.notes || ''
-        ]]);
+        // Log changes for cropper
+        var fields = ['id', 'type', 'thickness', 'size', 'location', 'cert', 'dateAdded', 'reservedFor', 'user', 'notes'];
+        var newValues = [data.id, data.type, data.thickness, data.size, data.location, data.cert, data.dateAdded, data.reservedFor || '', data.user, data.notes || ''];
+        for (var i = 0; i < fields.length; i++) {
+          if (String(oldRow[i]) !== String(newValues[i])) {
+            logChange(ss, data.id, data.tabName, fields[i], oldRow[i], newValues[i], data.user);
+          }
+        }
+        sheet.getRange(data.rowNumber, 1, 1, 10).setValues([newValues]);
       } else {
-        sheet.getRange(data.rowNumber, 1, 1, 11).setValues([[
-          data.id,
-          data.type,
-          data.thickness,
-          data.size,
-          data.location,
-          data.cert,
-          data.availableQty,
-          data.totalQty,
-          data.user,
-          data.dateAdded,
-          data.notes || ''
-        ]]);
+        // Log changes for full-sheet
+        var newRow = [data.id, data.type, data.thickness, data.size, data.location, data.cert, data.availableQty, data.totalQty, data.user, data.dateAdded, data.notes || ''];
+        var fields = ['id', 'type', 'thickness', 'size', 'location', 'cert', 'availableStock', 'totalStock', 'user', 'dateAdded', 'notes'];
+        for (var i = 0; i < fields.length; i++) {
+          if (String(oldRow[i]) !== String(newRow[i])) {
+            logChange(ss, data.id, data.tabName, fields[i], oldRow[i], newRow[i], data.user);
+          }
+        }
+        sheet.getRange(data.rowNumber, 1, 1, 11).setValues([newRow]);
+      }
+      
+      // Also log minimum stock change if provided
+      Logger.log('updateRow: Checking minStock. data.minStock=' + data.minStock);
+      if (typeof data.minStock !== 'undefined' && data.minStock !== null) {
+        Logger.log('updateRow: minStock is defined, calling getMinimumStock');
+        var oldMinStock = getMinimumStock(ss, data.id, data.tabName);
+        Logger.log('updateRow: oldMinStock=' + oldMinStock + ', newMinStock=' + data.minStock);
+        if (oldMinStock !== data.minStock) {
+          Logger.log('updateRow: Values differ, calling setMinimumStock');
+          setMinimumStock(ss, data.id, data.tabName, data.minStock);
+          logChange(ss, data.id, data.tabName, 'min_stock', oldMinStock, data.minStock, data.user);
+        }
       }
     }
     else if (data.action === "useCropper") {
+      logChange(ss, data.id, data.tabName, 'status', 'available', 'deleted', data.user);
       sheet.deleteRow(data.rowNumber);
     }
     else if (data.action === "useReservedQty") {
       var row = sheet.getRange(data.rowNumber, 1, 1, sheet.getLastColumn()).getValues()[0];
       var hasCert = row.length > 9 && row[5] !== undefined && isNaN(Number(row[5])) && row[6] !== undefined;
       var totalCell = sheet.getRange(data.rowNumber, hasCert ? 8 : 7);
-      var newTotal = (parseInt(totalCell.getValue()) || 0) - data.usedQty;
+      var oldTotal = parseInt(totalCell.getValue()) || 0;
+      var newTotal = oldTotal - data.usedQty;
       if (newTotal <= 0) {
+        logChange(ss, data.id, data.tabName, 'status', 'available', 'deleted', data.user);
         sheet.deleteRow(data.rowNumber);
       } else {
         totalCell.setValue(newTotal);
+        logChange(ss, data.id, data.tabName, 'total_stock', oldTotal, newTotal, data.user);
       }
     }
     else if (data.action === "updateQty") {
@@ -185,14 +313,19 @@ function doPost(e) {
       var availCell = sheet.getRange(data.rowNumber, hasCert ? 7 : 6);
       var totalCell = sheet.getRange(data.rowNumber, hasCert ? 8 : 7);
       
-      var newAvail = (parseInt(availCell.getValue()) || 0) - data.usedQty;
-      var newTotal = (parseInt(totalCell.getValue()) || 0) - data.usedQty;
+      var oldAvail = parseInt(availCell.getValue()) || 0;
+      var oldTotal = parseInt(totalCell.getValue()) || 0;
+      var newAvail = Math.max(0, oldAvail - data.usedQty);
+      var newTotal = oldTotal - data.usedQty;
       
       if (newTotal <= 0) {
+        logChange(ss, data.id, data.tabName, 'status', 'available', 'deleted', data.user);
         sheet.deleteRow(data.rowNumber);
       } else {
-        availCell.setValue(Math.max(0, newAvail));
+        availCell.setValue(newAvail);
         totalCell.setValue(newTotal);
+        logChange(ss, data.id, data.tabName, 'available_stock', oldAvail, newAvail, data.user);
+        logChange(ss, data.id, data.tabName, 'total_stock', oldTotal, newTotal, data.user);
       }
     }
     else if (data.action === "add") {
@@ -203,6 +336,7 @@ function doPost(e) {
 
       if (data.pageMode === 'croppers') {
         sheet.appendRow([data.id, data.type, data.thickness, data.size, data.location, data.cert, data.dateAdded, data.reservedFor || '', data.user, data.notes]);
+        logChange(ss, data.id, data.tabName, 'status', 'new', 'created', data.user);
       } else {
         var rows = sheet.getDataRange().getValues();
         var existingRow = null;
@@ -230,11 +364,17 @@ function doPost(e) {
           var currentAvail = parseInt(availCell.getValue()) || 0;
           var currentTotal = parseInt(totalCell.getValue()) || 0;
           var currentNotes = noteCell.getValue() || '';
+          
+          var newAvail = currentAvail + data.qty;
+          var newTotal = currentTotal + data.qty;
 
-          availCell.setValue(currentAvail + data.qty);
-          totalCell.setValue(currentTotal + data.qty);
+          availCell.setValue(newAvail);
+          totalCell.setValue(newTotal);
           availCell.setNumberFormat('0');
           totalCell.setNumberFormat('0');
+          
+          logChange(ss, data.id, data.tabName, 'available_stock', currentAvail, newAvail, data.user);
+          logChange(ss, data.id, data.tabName, 'total_stock', currentTotal, newTotal, data.user);
 
           if (data.notes) {
             noteCell.setValue(currentNotes ? currentNotes + ' | ' + data.notes : data.notes);
@@ -243,8 +383,16 @@ function doPost(e) {
           sheet.appendRow([data.id, data.type, data.thickness, data.size, data.location, data.cert, data.qty, data.qty, data.user, data.dateAdded, data.notes]);
           var newRow = sheet.getLastRow();
           sheet.getRange(newRow, 7, 1, 2).setNumberFormat('0');
+          logChange(ss, data.id, data.tabName, 'status', 'new', 'created', data.user);
+          logChange(ss, data.id, data.tabName, 'available_stock', 0, data.qty, data.user);
+          logChange(ss, data.id, data.tabName, 'total_stock', 0, data.qty, data.user);
         }
       }
+    }
+    else if (data.action === 'setMinimumStock') {
+      setMinimumStock(ss, data.itemId, data.tabName, data.minStock);
+      logChange(ss, data.itemId, data.tabName, 'min_stock', '0', data.minStock, data.user);
+      return ContentService.createTextOutput(JSON.stringify({result: 'success'})).setMimeType(ContentService.MimeType.JSON);
     }
     else if (data.action === 'createTab') {
       // Create empty tab (with headers) for a material type without adding any row
